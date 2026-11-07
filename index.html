@@ -28,7 +28,9 @@ button:disabled{background:#53616b}.grid{display:grid;grid-template-columns:1fr 
 <p class="note muted" id="ptm-provenance">Procedencia de resultados: SIN VERIFICAR.</p>
 <div class="stat"><span>Probabilidad independiente PTM</span><strong class="unknown" id="ptm-probability">SIN VERIFICAR</strong></div>
 <div class="stat"><span>Filtro PTM ≥70%</span><strong class="bad" id="ptm-filter">SIN VERIFICAR</strong></div>
-<div class="stat"><span>Polymarket / Kalshi / edge neto</span><strong class="unknown" id="ptm-market">SIN VERIFICAR</strong></div>
+<div class="stat"><span>Polymarket.com (precio · hora captura)</span><strong class="unknown" id="ptm-polymarket">SIN VERIFICAR</strong></div>
+<div class="stat"><span>Kalshi (precio · hora captura)</span><strong class="unknown" id="ptm-kalshi">SIN VERIFICAR</strong></div>
+<div class="stat"><span>Edge neto (solo mercado validado)</span><strong class="unknown" id="ptm-market">SIN VERIFICAR</strong></div>
 <button id="copy-request" type="button" style="background:#30537a">COPIAR SOLICITUD PREGAME PTM</button>
 <p id="copy-status" class="note muted" aria-live="polite">Puedes solicitar el análisis bajo demanda con el mismo formato PTM 3.3; copiar no verifica datos automáticamente.</p>
 <button id="market" type="button" style="background:#30537a">BUSCAR MERCADO EN POLYMARKET</button>
@@ -86,7 +88,9 @@ function clearPregameFields(){
  document.getElementById('ptm-scheduled').textContent='SIN VERIFICAR';
  document.getElementById('ptm-provenance').textContent='Procedencia de resultados: SIN VERIFICAR.';
  document.getElementById('ptm-filter').textContent='SIN VERIFICAR';
- document.getElementById('ptm-market').textContent='SIN VERIFICAR';
+ document.getElementById('ptm-polymarket').textContent='SIN VERIFICAR';
+  document.getElementById('ptm-kalshi').textContent='SIN VERIFICAR';
+  document.getElementById('ptm-market').textContent='SIN VERIFICAR';
 }
 // Diagnostic bridge only: read a locally supplied, explicitly unverified
 // Python PREGAME JSON result. Never infer authentication or approve the filter.
@@ -119,6 +123,8 @@ document.getElementById('load-pregame-json').addEventListener('click',()=>{
   document.getElementById('ptm-scheduled').textContent='SIN VERIFICAR';
   document.getElementById('ptm-provenance').textContent='Procedencia de resultados: SIN VERIFICAR.';
   document.getElementById('ptm-filter').textContent='SIN VERIFICAR';
+  document.getElementById('ptm-polymarket').textContent='SIN VERIFICAR';
+  document.getElementById('ptm-kalshi').textContent='SIN VERIFICAR';
   document.getElementById('ptm-market').textContent='SIN VERIFICAR';
   const scheduled=typeof p.scheduled_at_utc==='string'?new Date(p.scheduled_at_utc):null;
   document.getElementById('ptm-scheduled').textContent=
@@ -211,6 +217,8 @@ document.getElementById('analyze').addEventListener('click',()=>{
   document.getElementById('ptm-scheduled').textContent='SIN VERIFICAR';
   document.getElementById('ptm-provenance').textContent='Procedencia de resultados: SIN VERIFICAR.';
   document.getElementById('ptm-filter').textContent='SIN VERIFICAR';
+  document.getElementById('ptm-polymarket').textContent='SIN VERIFICAR';
+  document.getElementById('ptm-kalshi').textContent='SIN VERIFICAR';
   document.getElementById('ptm-market').textContent='SIN VERIFICAR';
   document.getElementById('pregame-json-status').textContent='Sin informe cargado para este partido.';
 } else {
@@ -222,6 +230,8 @@ document.getElementById('analyze').addEventListener('click',()=>{
   document.getElementById('ptm-scheduled').textContent='SIN VERIFICAR';
   document.getElementById('ptm-provenance').textContent='Procedencia de resultados: SIN VERIFICAR.';
   document.getElementById('ptm-filter').textContent='SIN VERIFICAR';
+  document.getElementById('ptm-polymarket').textContent='SIN VERIFICAR';
+  document.getElementById('ptm-kalshi').textContent='SIN VERIFICAR';
   document.getElementById('ptm-market').textContent='SIN VERIFICAR';
   document.getElementById('pregame-json-status').textContent='Partido inválido; informe anterior descartado.';
 }
