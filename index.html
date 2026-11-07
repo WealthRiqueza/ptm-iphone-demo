@@ -39,19 +39,20 @@ document.getElementById('analyze').addEventListener('click',()=>{
  if(valid){document.getElementById('name1').textContent=parts[0];document.getElementById('name2').textContent=parts[1];marketStatus.textContent='Mercado aún no consultado.';marketList.replaceChildren();}
 });
 marketButton.addEventListener('click',async()=>{
- const parts=input.value.trim().split(/\\s+VS\\s+/i).map(s=>s.trim());
+ const parts=input.value.trim().split(/\s+VS\s+/i).map(s=>s.trim());
  if(parts.length!==2||parts.some(s=>s.length<3)){marketStatus.textContent='Primero identifica dos jugadores.';return;}
  marketButton.disabled=true;marketStatus.textContent='Consultando mercados públicos de Polymarket…';marketList.replaceChildren();
  try{
   const controller=new AbortController();const timeout=setTimeout(()=>controller.abort(),10000);
-  const query=parts.map(s=>s.split(/\\s+/)[0]).join(' ');
+  const query=parts[0].split(/\s+/)[0];
   let response;
-  try{response=await fetch('https://gamma-api.polymarket.com/public-search?q='+encodeURIComponent(query)+'&limit_per_type=20&keep_closed_markets=0',{signal:controller.signal,headers:{accept:'application/json'}});}finally{clearTimeout(timeout);}
+  try{response=await fetch('https://gamma-api.polymarket.com/public-search?q='+encodeURIComponent(query)+'&events_status=active&limit_per_type=50&keep_closed_markets=0',{signal:controller.signal,headers:{accept:'application/json'}});}finally{clearTimeout(timeout);}
   if(!response.ok)throw new Error('HTTP '+response.status);
   const data=await response.json();if(!data||typeof data!=='object')throw new Error('Respuesta inesperada');
-  const norm=s=>String(s||'').normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').toLowerCase();
-  const surnames=parts.map(s=>norm(s.split(/\\s+/)[0]));
-  const entries=[...(Array.isArray(data.events)?data.events:[]),...(Array.isArray(data.markets)?data.markets:[])];
+  const norm=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+  const surnames=parts.map(s=>norm(s.split(/\s+/)[0]));
+  const events=Array.isArray(data.events)?data.events:[];
+  const entries=[...events,...events.flatMap(e=>Array.isArray(e.markets)?e.markets:[]),...(Array.isArray(data.markets)?data.markets:[])];
   const matches=entries.filter(m=>{const t=norm([m.title,m.question,m.description,m.slug].join(' '));return surnames.every(s=>t.includes(s));}).slice(0,5);
   if(!matches.length){marketStatus.textContent='Sin coincidencias en la búsqueda pública consultada. No significa que el partido no exista.';return;}
   marketStatus.textContent='Posibles coincidencias de Polymarket. Identidad, fecha, estado y precios SIN VERIFICAR.';
