@@ -21,17 +21,46 @@ button:disabled{background:#53616b}.grid{display:grid;grid-template-columns:1fr 
 <div class="grid"><div class="player" id="left"><div class="tag unknown">SIN VERIFICAR</div><h3 id="name1"></h3></div>
 <div class="player" id="right"><div class="tag unknown">SIN VERIFICAR</div><h3 id="name2"></h3></div></div>
 <p class="note muted">Los colores de favorito/desfavorito se activarán solamente al recibir probabilidades PTM verificadas. Esta pantalla no inventa estadísticas.</p>
-<div class="stat"><span>Probabilidad independiente PTM</span><strong class="unknown">SIN VERIFICAR</strong></div>
-<div class="stat"><span>Forma reciente · H2H · remontadas</span><strong class="unknown">SIN VERIFICAR</strong></div>
-<div class="stat"><span>Polymarket · precio · edge</span><strong class="unknown">SIN VERIFICAR</strong></div>
+<h2 style="font-size:1.05rem">Informe PTM 3.3 · PREGAME bajo demanda</h2>
+<p class="note muted">Las estadísticas se completan únicamente al contar con observaciones verificadas. Sin conexión a una fuente, quedan SIN VERIFICAR.</p>
+<div id="report-fields" aria-live="polite"></div>
+<div class="stat"><span>Probabilidad independiente PTM</span><strong class="unknown" id="ptm-probability">SIN VERIFICAR</strong></div>
+<div class="stat"><span>Filtro PTM ≥70%</span><strong class="bad" id="ptm-filter">SIN VERIFICAR</strong></div>
+<div class="stat"><span>Polymarket / Kalshi / edge neto</span><strong class="unknown" id="ptm-market">SIN VERIFICAR</strong></div>
+<button id="copy-request" type="button" style="background:#30537a">COPIAR SOLICITUD PREGAME PTM</button>
+<p id="copy-status" class="note muted" aria-live="polite">Puedes solicitar el análisis bajo demanda con el mismo formato PTM 3.3; copiar no verifica datos automáticamente.</p>
 <button id="market" type="button" style="background:#30537a">BUSCAR MERCADO EN POLYMARKET</button>
 <p id="market-status" class="note muted" aria-live="polite">Consulta opcional. No sustituye la verificación de resultados.</p><div id="market-list" class="note"></div>
 <div class="stat"><span>Decisión</span><strong class="bad">DESCARTAR · $0</strong></div>
-<p class="note">Interfaz de demostración local: todavía no conecta consultas en vivo ni calcula probabilidades. Verde = dato favorable verificado; rojo = desfavorable verificado; gris = desconocido.</p>
+<p class="note">Interfaz de desarrollo: la búsqueda de mercado es independiente del análisis estadístico. No calcula probabilidades sin evidencia verificable. Verde = dato favorable verificado; rojo = desfavorable verificado; gris = desconocido.</p>
 </section>
 <script>
 const input=document.getElementById('match'), error=document.getElementById('error'), results=document.getElementById('results');
 const marketButton=document.getElementById('market'), marketStatus=document.getElementById('market-status'), marketList=document.getElementById('market-list');
+const REPORT_FIELDS=[
+ ['H2H histórico','h2h_historico'],['H2H reciente (fechas y sets)','h2h_reciente'],
+ ['Forma últimos 10','forma_ultimos_10'],['Forma últimos 5','forma_ultimos_5'],
+ ['Primer set → victoria','primer_set_conversion'],['Remontadas tras perder 1.º set','remontadas'],
+ ['Quinto set entre ambos','quinto_set_h2h'],['Quinto set general','quinto_set_general'],
+ ['Rivales comunes','rivales_comunes'],['Fatiga y partidos del día','fatiga_mismo_dia'],
+ ['Alerta sorpresa','alerta_sorpresa'],['Contradicción H2H','alerta_contradiccion_h2h'],
+ ['Riesgo de remontada','riesgo_remontada'],['Cuotas externas','cuotas_externas']
+];
+const reportFields=document.getElementById('report-fields');
+for(const [label,key] of REPORT_FIELDS){
+ const row=document.createElement('div');row.className='stat';row.dataset.key=key;
+ const name=document.createElement('span');name.textContent=label;
+ const value=document.createElement('strong');value.className='unknown';value.textContent='SIN VERIFICAR';
+ row.append(name,value);reportFields.append(row);
+}
+document.getElementById('copy-request').addEventListener('click',async()=>{
+ const parts=input.value.trim().split(/\\s+VS\\s+/i).map(s=>s.trim());
+ if(parts.length!==2||parts.some(s=>s.length<3)){document.getElementById('copy-status').textContent='Primero identifica un partido.';return;}
+ const request='PREGAME PTM 3.3 para '+parts[0]+' VS '+parts[1]+'. Consulta datos al momento en fuentes públicas permitidas: H2H total y reciente con fechas/sets, últimos 10/5, conversión del primer set, remontadas, quinto set H2H y general, rivales comunes, fatiga, alertas de sorpresa y contradicción, cuotas externas, Polymarket y Kalshi separados. Probabilidad PTM INDEPENDIENTE con evidencia y filtro mínimo 70%; sin evidencia marca SIN VERIFICAR y DESCARTAR. Hora Miami únicamente. Decisión ultra corta. No inventes cifras, no operar $0.';
+ try{await navigator.clipboard.writeText(request);document.getElementById('copy-status').textContent='Solicitud copiada. Pégala en ChatGPT para consultar el PREGAME.';}
+ catch(e){document.getElementById('copy-status').textContent='El navegador bloqueó copiar. Selecciona y copia el texto manualmente.';}
+});
+
 document.getElementById('analyze').addEventListener('click',()=>{
  const parts=input.value.trim().split(/\s+VS\s+/i).map(s=>s.trim());
  const valid=parts.length===2&&parts.every(s=>s.length>=3&&s.length<=120);
@@ -53,7 +82,7 @@ marketButton.addEventListener('click',async()=>{
   const surnames=parts.map(s=>norm(s.split(/\s+/)[0]));
   const events=Array.isArray(data.events)?data.events:[];
   const entries=[...events,...events.flatMap(e=>Array.isArray(e.markets)?e.markets:[]),...(Array.isArray(data.markets)?data.markets:[])];
-  const matches=entries.filter(m=>{const t=norm([m.title,m.question,m.description,m.slug].join(' '));return surnames.every(s=>t.includes(s));}).slice(0,5);
+  const matches=entries.filter(m=>{const t=norm([m.title,m.question,m.description,m.slug].join(' '));const tokens=t.split(/[^a-z0-9]+/).filter(Boolean);return surnames.every(s=>tokens.includes(s));}).slice(0,5);
   if(!matches.length){marketStatus.textContent='Sin coincidencias en la búsqueda pública consultada. No significa que el partido no exista.';return;}
   marketStatus.textContent='Posibles coincidencias de Polymarket. Identidad, fecha, estado y precios SIN VERIFICAR.';
   for(const m of matches){const p=document.createElement('p');p.textContent=String(m.title||m.question||'Mercado sin título')+' · ID '+String(m.id||'desconocido');marketList.append(p);}
