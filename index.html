@@ -24,15 +24,37 @@ button:disabled{background:#53616b}.grid{display:grid;grid-template-columns:1fr 
 <div class="stat"><span>Probabilidad independiente PTM</span><strong class="unknown">SIN VERIFICAR</strong></div>
 <div class="stat"><span>Forma reciente · H2H · remontadas</span><strong class="unknown">SIN VERIFICAR</strong></div>
 <div class="stat"><span>Polymarket · precio · edge</span><strong class="unknown">SIN VERIFICAR</strong></div>
+<button id="market" type="button" style="background:#30537a">BUSCAR MERCADO EN POLYMARKET</button>
+<p id="market-status" class="note muted" aria-live="polite">Consulta opcional. No sustituye la verificación de resultados.</p><div id="market-list" class="note"></div>
 <div class="stat"><span>Decisión</span><strong class="bad">DESCARTAR · $0</strong></div>
 <p class="note">Interfaz de demostración local: todavía no conecta consultas en vivo ni calcula probabilidades. Verde = dato favorable verificado; rojo = desfavorable verificado; gris = desconocido.</p>
 </section>
 <script>
 const input=document.getElementById('match'), error=document.getElementById('error'), results=document.getElementById('results');
+const marketButton=document.getElementById('market'), marketStatus=document.getElementById('market-status'), marketList=document.getElementById('market-list');
 document.getElementById('analyze').addEventListener('click',()=>{
  const parts=input.value.trim().split(/\s+VS\s+/i).map(s=>s.trim());
  const valid=parts.length===2&&parts.every(s=>s.length>=3&&s.length<=120);
  error.classList.toggle('hidden',valid);results.classList.toggle('hidden',!valid);
- if(valid){document.getElementById('name1').textContent=parts[0];document.getElementById('name2').textContent=parts[1];}
+ if(valid){document.getElementById('name1').textContent=parts[0];document.getElementById('name2').textContent=parts[1];marketStatus.textContent='Mercado aún no consultado.';marketList.replaceChildren();}
+});
+marketButton.addEventListener('click',async()=>{
+ const parts=input.value.trim().split(/\\s+VS\\s+/i).map(s=>s.trim());
+ if(parts.length!==2||parts.some(s=>s.length<3)){marketStatus.textContent='Primero identifica dos jugadores.';return;}
+ marketButton.disabled=true;marketStatus.textContent='Consultando mercados públicos de Polymarket…';marketList.replaceChildren();
+ try{
+  const controller=new AbortController();const timeout=setTimeout(()=>controller.abort(),9000);
+  let response;
+  try{response=await fetch('https://gamma-api.polymarket.com/markets?active=true&closed=false&limit=100',{signal:controller.signal,headers:{accept:'application/json'}});}finally{clearTimeout(timeout);}
+  if(!response.ok)throw new Error('HTTP '+response.status);
+  const markets=await response.json();if(!Array.isArray(markets))throw new Error('Respuesta inesperada');
+  const norm=s=>String(s||'').normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').toLowerCase();
+  const surname=s=>norm(s.split(/\\s+/)[0]);const a=surname(parts[0]),b=surname(parts[1]);
+  const matches=markets.filter(m=>{const t=norm([m.question,m.description,m.slug].join(' '));return t.includes(a)&&t.includes(b);}).slice(0,5);
+  if(!matches.length){marketStatus.textContent='Sin coincidencias en los primeros 100 mercados activos consultados. No significa que el partido no exista.';return;}
+  marketStatus.textContent='Posibles coincidencias encontradas; comprobar identidad, fecha y estado antes de usar datos.';
+  for(const m of matches){const p=document.createElement('p');p.textContent=String(m.question||'Mercado sin título')+' · ID '+String(m.id||'desconocido');marketList.append(p);}
+ }catch(e){marketStatus.textContent='No se pudo consultar Polymarket desde este navegador ('+String(e.message||'error')+'). No hay datos verificados.';}
+ finally{marketButton.disabled=false;}
 });
 </script></body></html>
