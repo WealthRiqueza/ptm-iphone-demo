@@ -31,6 +31,9 @@ button:disabled{background:#53616b}.grid{display:grid;grid-template-columns:1fr 
 <p id="copy-status" class="note muted" aria-live="polite">Puedes solicitar el análisis bajo demanda con el mismo formato PTM 3.3; copiar no verifica datos automáticamente.</p>
 <button id="market" type="button" style="background:#30537a">BUSCAR MERCADO EN POLYMARKET</button>
 <p id="market-status" class="note muted" aria-live="polite">Consulta opcional. No sustituye la verificación de resultados.</p><div id="market-list" class="note"></div>
+<button id="market-us" type="button" style="background:#30537a">BUSCAR POLYMARKET US (DISTINTO)</button>
+<p id="market-us-status" class="note muted" aria-live="polite">Polymarket US utiliza una API distinta. Los resultados son candidatos, no precios ejecutables.</p>
+<div id="market-us-list" class="note"></div>
 <div class="stat"><span>Decisión</span><strong class="bad">DESCARTAR · $0</strong></div>
 <p class="note">Interfaz de desarrollo: la búsqueda de mercado es independiente del análisis estadístico. No calcula probabilidades sin evidencia verificable. Verde = dato favorable verificado; rojo = desfavorable verificado; gris = desconocido.</p>
 </section>
@@ -67,6 +70,41 @@ document.getElementById('analyze').addEventListener('click',()=>{
  error.classList.toggle('hidden',valid);results.classList.toggle('hidden',!valid);
  if(valid){document.getElementById('name1').textContent=parts[0];document.getElementById('name2').textContent=parts[1];marketStatus.textContent='Mercado aún no consultado.';marketList.replaceChildren();}
 });
+document.getElementById('market-us').addEventListener('click',async()=>{
+ const parts=input.value.trim().split(/\\s+VS\\s+/i).map(s=>s.trim());
+ const status=document.getElementById('market-us-status');
+ const list=document.getElementById('market-us-list');
+ const button=document.getElementById('market-us');
+ if(parts.length!==2||parts.some(s=>s.length<3)){status.textContent='Primero identifica dos jugadores.';return;}
+ button.disabled=true;status.textContent='Consultando API pública de Polymarket US…';list.replaceChildren();
+ const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),10000);
+ try{
+  const query=parts.map(s=>s.split(/\\s+/)[0]).join(' ');
+  const url='https://gateway.polymarket.us/v1/search?query='+encodeURIComponent(query)+'&limit=20';
+  const response=await fetch(url,{signal:controller.signal,headers:{accept:'application/json'}});
+  if(!response.ok)throw new Error('HTTP '+response.status);
+  const data=await response.json();
+  if(!data||!Array.isArray(data.events))throw new Error('Esquema inesperado');
+  const norm=s=>String(s||'').normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').toLowerCase();
+  const surnames=parts.map(s=>norm(s.split(/\\s+/)[0]));
+  const events=data.events.filter(e=>{
+   if(!e||typeof e!=='object')return false;
+   const tokens=norm([e.title,e.subtitle,e.slug].join(' ')).split(/[^a-z0-9]+/).filter(Boolean);
+   return surnames.every(s=>tokens.includes(s));
+  }).slice(0,5);
+  if(!events.length){status.textContent='Sin candidatos en esta consulta US. No implica ausencia del partido.';return;}
+  status.textContent='Candidatos US consultados '+new Date().toLocaleString('es-US',{timeZone:'America/New_York'})+' (Miami). Identidad, puntuación y precios SIN VERIFICAR.';
+  for(const event of events){
+   const p=document.createElement('p');
+   const positive=v=>v!==null&&v!==undefined&&String(v).trim()!==''&&Number.isFinite(Number(v))&&Number(v)>0;
+   const screen=positive(event.volume)&&positive(event.liquidity)?'Actividad agregada; mercado SIN VERIFICAR':'Volumen/liquidez ausentes o cero: DESCARTAR';
+   p.textContent=String(event.title||'Evento')+' · '+String(event.startTime||'Hora sin verificar')+' · '+screen;
+   list.append(p);
+  }
+ }catch(e){status.textContent='Consulta US no disponible en este navegador ('+String(e.message||'error')+'). SIN VERIFICAR.';}
+ finally{clearTimeout(timeout);button.disabled=false;}
+});
+
 marketButton.addEventListener('click',async()=>{
  const parts=input.value.trim().split(/\s+VS\s+/i).map(s=>s.trim());
  if(parts.length!==2||parts.some(s=>s.length<3)){marketStatus.textContent='Primero identifica dos jugadores.';return;}
