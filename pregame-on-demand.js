@@ -24,7 +24,7 @@
        !["authorized","user-provided"].includes(prov.permission))
      throw Error("Procedencia HTTPS y permiso declarado requeridos");
    const captured=iso(prov.captured_at_utc);
-   if (captured>scheduled) throw Error("Captura posterior al partido: no es PREGAME");
+   if (captured>=scheduled) throw Error("Captura en o después del inicio: no es PREGAME");
    if (!Array.isArray(p.matches) || p.matches.length>200) throw Error("Máximo 200 partidos observados");
    const ids=new Set(), rows=[];
    for (const m of p.matches) {
