@@ -70,7 +70,7 @@ document.getElementById('load-pregame-json').addEventListener('click',()=>{
  try{
   const raw=document.getElementById('pregame-json').value;
   if(!raw||raw.length>100000)throw new Error('Informe vacío o demasiado grande');
-  const p=JSON.parse(raw),parts=input.value.trim().split(/\\s+VS\\s+/i).map(s=>s.trim());
+  const p=JSON.parse(raw),parts=input.value.trim().split(/\s+VS\s+/i).map(s=>s.trim());
   if(!p||p.schema_version!=='ptm-pregame-v1'||parts.length!==2||
      p.player_a!==parts[0]||p.player_b!==parts[1])
    throw new Error('Esquema o identidad del partido no coincide');
