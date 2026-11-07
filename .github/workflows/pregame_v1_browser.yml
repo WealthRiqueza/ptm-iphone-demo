@@ -11,6 +11,7 @@ on:
     paths:
       - 'pregame-on-demand.js'
       - 'test_pregame_on_demand.js'
+      - 'test_pregame_authorized_fetch.js'
       - 'index.html'
       - '.github/workflows/pregame_v1_browser.yml'
 jobs:
