@@ -100,6 +100,36 @@ document.getElementById('market-us').addEventListener('click',async()=>{
    const screen=positive(event.volume)&&positive(event.liquidity)?'Actividad agregada; mercado SIN VERIFICAR':'Volumen/liquidez ausentes o cero: DESCARTAR';
    p.textContent=String(event.title||'Evento')+' · '+String(event.startTime||'Hora sin verificar')+' · '+screen;
    list.append(p);
+   // Official US event detail is a bounded, single-event read, NOT a Setka historical feed.
+   // Scores shown here may be live/final and MUST NOT be used as pre-match evidence.
+   if(typeof event.slug==='string'&&/^[a-z0-9-]{3,180}$/.test(event.slug)){
+    const detailButton=document.createElement('button');
+    detailButton.type='button';detailButton.textContent='VER EVENTO US OFICIAL (SOLO LECTURA)';
+    detailButton.style.background='#30537a';
+    const detail=document.createElement('p');detail.className='note muted';
+    list.append(detailButton,detail);
+    detailButton.addEventListener('click',async()=>{
+     detailButton.disabled=true;detail.textContent='Consultando evento oficial…';
+     const ctl=new AbortController(),timer=setTimeout(()=>ctl.abort(),10000);
+     const url='https://gateway.polymarket.us/v1/events/slug/'+encodeURIComponent(event.slug);
+     try{
+      const res=await fetch(url,{signal:ctl.signal,headers:{accept:'application/json'}});
+      if(!res.ok)throw new Error('HTTP '+res.status);
+      const payload=await res.json(),item=payload&&payload.event;
+      if(!item||typeof item!=='object')throw new Error('Esquema inesperado');
+      const words=norm([item.title,item.subtitle,item.slug].join(' ')).split(/[^a-z0-9]+/).filter(Boolean);
+      if(!surnames.every(name=>words.includes(name)))throw new Error('Identidad del partido no coincide');
+      const when=item.startTime||item.eventDate||item.startDate;
+      const d=when?new Date(when):null;
+      const miami=d&&Number.isFinite(d.getTime())?d.toLocaleString('es-US',{timeZone:'America/New_York'}):'SIN VERIFICAR';
+      const score=typeof item.score==='string'&&item.score.trim()?item.score:'SIN VERIFICAR';
+      const volume=positive(item.volume)?String(item.volume):'SIN VERIFICAR';
+      const liquidity=positive(item.liquidity)?String(item.liquidity):'SIN VERIFICAR';
+      detail.textContent='Fuente: Polymarket US API · Hora Miami: '+miami+' · Marcador publicado: '+score+' · Volumen: '+volume+' · Liquidez: '+liquidity+' · Captura: '+new Date().toISOString()+'. Marcador live/final NO es histórico PREGAME. H2H y probabilidad PTM siguen SIN VERIFICAR.';
+     }catch(err){detail.textContent='Evento oficial no disponible o identidad no confirmada ('+String(err.message||'error')+'). SIN VERIFICAR.';}
+     finally{clearTimeout(timer);detailButton.disabled=false;}
+    });
+   }
   }
  }catch(e){status.textContent='Consulta US no disponible en este navegador ('+String(e.message||'error')+'). SIN VERIFICAR.';}
  finally{clearTimeout(timeout);button.disabled=false;}
