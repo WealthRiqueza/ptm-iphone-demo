@@ -13,19 +13,19 @@ const fields = [
  "alerta_contradiccion_h2h","riesgo_remontada","cuotas_externas"
 ];
 const source = () => ({
- player_a:"A", player_b:"B", scheduled_at_utc:"2026-11-07T18:00:00Z",
+ player_a:"ALPHA", player_b:"BETA", scheduled_at_utc:"2026-11-07T18:00:00Z",
  provenance:{source_url:"https://ptm-fixture.example/source",permission:"user-provided",captured_at_utc:"2026-11-07T17:00:00Z"},
  matches:[
-  {id:"one",player_a:"B",player_b:"A",played_at_utc:"2026-11-06T17:00:00Z",
+  {id:"one",player_a:"BETA",player_b:"ALPHA",played_at_utc:"2026-11-06T17:00:00Z",
    sets:[[11,8],[7,11],[8,11],[9,11]],source_url:"https://ptm-fixture.example/one"},
-  {id:"two",player_a:"A",player_b:"B",played_at_utc:"2026-11-05T17:00:00Z",
+  {id:"two",player_a:"ALPHA",player_b:"BETA",played_at_utc:"2026-11-05T17:00:00Z",
    sets:[[11,9],[9,11],[11,9],[8,11],[9,11]],source_url:"https://ptm-fixture.example/two"}
  ]
 });
 const manual = () => ({
- schema_version:"ptm-pregame-v1",player_a:"A",player_b:"B",
+ schema_version:"ptm-pregame-v1",player_a:"ALPHA",player_b:"BETA",
  scheduled_at_utc:"SIN VERIFICAR",
- statistics:Object.fromEntries(fields.map(k=>[k,k==="h2h_historico"?"A 1 - 1 B (NO AUTENTICADO)":"SIN VERIFICAR"])),
+ statistics:Object.fromEntries(fields.map(k=>[k,k==="h2h_historico"?"ALPHA 1 - 1 BETA (NO AUTENTICADO)":"SIN VERIFICAR"])),
  observed_rows:0,cutoff_enforced:false,upstream_verified:false,
  model_probability_verified:false,decision:"DESCARTAR",amount_usd:0
 });
@@ -37,7 +37,7 @@ async function testBrowser(type) {
  page.on("pageerror",e=>errors.push(e.message));
  try {
   await page.goto(pathToFileURL(path.join(__dirname,"index.html")).href);
-  await page.locator("#match").fill("A VS B");
+  await page.locator("#match").fill("ALPHA VS BETA");
   await page.locator("#analyze").click();
   assert.equal(await page.locator("#ptm-probability").textContent(),"SIN VERIFICAR");
   assert.equal(await page.locator("#report-fields [data-key]").count(),14);
@@ -85,7 +85,7 @@ async function testBrowser(type) {
   assert.equal(await page.locator("#ptm-filter").textContent(),"SIN VERIFICAR");
 
   // Changing the matchup invalidates any old statistics.
-  await page.locator("#match").fill("C VS D");
+  await page.locator("#match").fill("GAMMA VS DELTA");
   await page.locator("#analyze").click();
   assert.equal(await page.locator('[data-key="h2h_historico"] strong').textContent(),"SIN VERIFICAR");
   assert.equal(await page.locator("#ptm-market").textContent(),"SIN VERIFICAR");
