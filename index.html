@@ -31,7 +31,7 @@ button:disabled{background:#53616b}.grid{display:grid;grid-template-columns:1fr 
 <div class="stat"><span>Polymarket.com (precio · hora captura)</span><strong class="unknown" id="ptm-polymarket">SIN VERIFICAR</strong></div>
 <div class="stat"><span>Kalshi (precio · hora captura)</span><strong class="unknown" id="ptm-kalshi">SIN VERIFICAR</strong></div>
 <div class="stat"><span>Edge neto (solo mercado validado)</span><strong class="unknown" id="ptm-market">SIN VERIFICAR</strong></div>
-<button id="copy-request" type="button" style="background:#30537a">COPIAR SOLICITUD PREGAME PTM</button>
+<button id="copy-request" type="button" style="background:#30537a">COPIAR SOLICITUD PREGAME + JSON PARA IPHONE</button>
 <p id="copy-status" class="note muted" aria-live="polite">Puedes solicitar el análisis bajo demanda con el mismo formato PTM 3.3; copiar no verifica datos automáticamente.</p>
 <button id="market" type="button" style="background:#30537a">BUSCAR MERCADO EN POLYMARKET</button>
 <p id="market-status" class="note muted" aria-live="polite">Consulta opcional. No sustituye la verificación de resultados.</p><div id="market-list" class="note"></div>
@@ -41,8 +41,8 @@ button:disabled{background:#53616b}.grid{display:grid;grid-template-columns:1fr 
 <div class="stat"><span>Decisión</span><strong class="bad">DESCARTAR · $0</strong></div>
 <p class="note">Interfaz de desarrollo: la búsqueda de mercado es independiente del análisis estadístico. No calcula probabilidades sin evidencia verificable. Verde = dato favorable verificado; rojo = desfavorable verificado; gris = desconocido.</p>
 <details class="panel" id="report-json-diagnostic">
-<summary>Prueba técnica: cargar informe JSON PREGAME</summary>
-<p class="note muted">Solo para comprobar la conexión entre el motor estadístico y la pantalla. No obtiene datos automáticamente ni autentica la fuente.</p>
+<summary>Pegar informe PREGAME de ChatGPT (JSON) o importar desde Archivos</summary>
+<p class="note muted">Puedes pedir a ChatGPT el análisis y un bloque JSON con el botón COPIAR SOLICITUD PREGAME PTM. Pega ese JSON aquí para mostrar los 14 indicadores en iPhone. Es una transferencia manual: no autentica fuentes ni valida una probabilidad.</p>
 <textarea id="pregame-json" maxlength="100000" placeholder='{"schema_version":"ptm-pregame-v1", ...}'></textarea>
 <label for="pregame-json-file" class="note">O selecciona un informe .json guardado en Archivos (iPhone):</label>
 <input type="file" id="pregame-json-file" accept=".json,application/json" aria-label="Seleccionar informe PREGAME JSON" style="display:block;width:100%;margin-top:8px">
@@ -241,8 +241,9 @@ document.getElementById('pregame-source-file').addEventListener('change',async(e
 document.getElementById('copy-request').addEventListener('click',async()=>{
  const parts=input.value.trim().split(/\s+VS\s+/i).map(s=>s.trim());
  if(parts.length!==2||parts.some(s=>s.length<3)){document.getElementById('copy-status').textContent='Primero identifica un partido.';return;}
- const request='PREGAME PTM 3.3 para '+parts[0]+' VS '+parts[1]+'. Consulta datos al momento en fuentes públicas permitidas: H2H total y reciente con fechas/sets, últimos 10/5, conversión del primer set, remontadas, quinto set H2H y general, rivales comunes, fatiga, alertas de sorpresa y contradicción, cuotas externas, Polymarket y Kalshi separados. Probabilidad PTM INDEPENDIENTE con evidencia y filtro mínimo 70%; sin evidencia marca SIN VERIFICAR y DESCARTAR. Hora Miami únicamente. Decisión ultra corta. No inventes cifras, no operar $0.';
- try{await navigator.clipboard.writeText(request);document.getElementById('copy-status').textContent='Solicitud copiada. Pégala en ChatGPT para consultar el PREGAME.';}
+ const template={schema_version:'ptm-pregame-v1',player_a:parts[0],player_b:parts[1],scheduled_at_utc:'SIN VERIFICAR',statistics:Object.fromEntries(REPORT_FIELDS.map(([,key])=>[key,'SIN VERIFICAR'])),observed_rows:0,cutoff_enforced:false,upstream_verified:false,model_probability_verified:false,decision:'DESCARTAR',amount_usd:0};
+ const request='PREGAME PTM 3.3 para '+parts[0]+' VS '+parts[1]+'. Consulta puntualmente fuentes públicas permitidas, sin scraping masivo ni base histórica permanente. Entrega análisis legible con hora de Miami, H2H total/reciente con fechas y sets, forma últimos 10/5, conversión primer set, remontadas, quinto set H2H/general, rivales comunes, fatiga, alertas sorpresa/contradicción, cuotas, Polymarket y Kalshi separados con hora, probabilidad independiente solo con evidencia y filtro >=70%. No inventes datos: SIN VERIFICAR donde falten; sin evidencia, DESCARTAR y $0. Además entrega un bloque JSON sin markdown para pegar en la pantalla iPhone, con EXACTAMENTE el siguiente esquema y las 14 claves. Sustituye solo valores respaldados por fuentes y señala su procedencia. Nunca pongas cutoff_enforced=true a menos que hayas comprobado que TODOS los resultados usados son anteriores a la hora programada UTC, y nunca pongas upstream_verified ni model_probability_verified en true. Si no conoces la hora UTC, conserva SIN VERIFICAR: la pantalla rechazará el JSON de forma segura; el análisis legible sigue siendo útil. No incluyas precios o probabilidad como verificados en el JSON. Esquema: '+JSON.stringify(template);
+ try{await navigator.clipboard.writeText(request);document.getElementById('copy-status').textContent='Solicitud y formato JSON copiados. Pégalos en ChatGPT; después pega el JSON de respuesta en esta pantalla.';}
  catch(e){document.getElementById('copy-status').textContent='El navegador bloqueó copiar. Selecciona y copia el texto manualmente.';}
 });
 
