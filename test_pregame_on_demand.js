@@ -42,3 +42,52 @@ assert.throws(()=>analyze(x),/Puntos de set/);
 x=fixture();x.provenance.permission="unknown";
 assert.throws(()=>analyze(x),/Procedencia/);
 console.log("PTM PREGAME V1 browser engine: 17 offline assertions PASS (synthetic fixtures; NO predictive validation)");
+
+
+// End-to-end DOM import check: ChatGPT's display-only 14-field JSON must
+// load even when the kickoff time is unknown. It must never approve a bet.
+const fs=require("node:fs"),vm=require("node:vm");
+const html=fs.readFileSync(require("node:path").join(__dirname,"index.html"),"utf8");
+const inline=html.match(/<script>\s*([\s\S]*?)<\/script>/);
+assert.ok(inline,"Inline iPhone UI script must exist");
+class MockElement {
+ constructor(tag="div"){this.tagName=tag;this.children=[];this.dataset={};this.listeners={};this.value="";this.textContent="";this.className="";this.style={};this.classList={toggle(){}};}
+ addEventListener(type,fn){this.listeners[type]=fn;}
+ append(...nodes){this.children.push(...nodes);}
+ replaceChildren(...nodes){this.children=nodes;}
+ querySelectorAll(selector){return selector==="[data-key]"?this.children.filter(n=>n.dataset.key):[];}
+ querySelector(selector){return this.children.find(n=>n.tagName===selector)||null;}
+ click(){return this.listeners.click?.();}
+}
+const dom=new Map();
+const document={getElementById(id){if(!dom.has(id))dom.set(id,new MockElement());return dom.get(id);},createElement(tag){return new MockElement(tag);}};
+const sandbox={document,Date,Intl,URL,AbortController,setTimeout,clearTimeout,console};
+sandbox.globalThis=sandbox;
+vm.runInNewContext(inline[1],sandbox,{filename:"iphone-index-inline.js"});
+const el=id=>document.getElementById(id);
+el("match").value="A VS B";el("analyze").click();
+const fields=Object.fromEntries([
+ "h2h_historico","h2h_reciente","forma_ultimos_10","forma_ultimos_5",
+ "primer_set_conversion","remontadas","quinto_set_h2h","quinto_set_general",
+ "rivales_comunes","fatiga_mismo_dia","alerta_sorpresa",
+ "alerta_contradiccion_h2h","riesgo_remontada","cuotas_externas"
+].map(k=>[k,k==="h2h_historico"?"A 2 - 1 B (fuente NO autenticada)":"SIN VERIFICAR"]));
+const manual={schema_version:"ptm-pregame-v1",player_a:"A",player_b:"B",
+ scheduled_at_utc:"SIN VERIFICAR",statistics:fields,observed_rows:0,
+ cutoff_enforced:false,upstream_verified:false,model_probability_verified:false,
+ decision:"DESCARTAR",amount_usd:0};
+el("pregame-json").value=JSON.stringify(manual);
+el("load-pregame-json").click();
+assert.match(el("pregame-json-status").textContent,/Informe manual de ChatGPT cargado/);
+assert.match(el("report-fields").children[0].querySelector("strong").textContent,/A 2 - 1 B/);
+assert.equal(el("ptm-filter").textContent,"SIN VERIFICAR");
+assert.equal(el("ptm-probability").textContent,"SIN VERIFICAR");
+assert.equal(el("ptm-market").textContent,"SIN VERIFICAR");
+assert.equal(el("ptm-scheduled").textContent,"SIN VERIFICAR");
+for(const unsafe of [{...manual,decision:"ESPERAR"},{...manual,model_probability_verified:true},
+                     {...manual,observed_rows:1},{...manual,amount_usd:100}]){
+ el("pregame-json").value=JSON.stringify(unsafe);el("load-pregame-json").click();
+ assert.match(el("pregame-json-status").textContent,/No se cargó el informe/);
+ assert.equal(el("report-fields").children[0].querySelector("strong").textContent,"SIN VERIFICAR");
+}
+console.log("PTM PREGAME V1 iPhone manual JSON import: PASS (mock DOM; Safari real not tested)");
