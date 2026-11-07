@@ -134,6 +134,15 @@ document.getElementById('analyze').addEventListener('click',()=>{
   document.getElementById('ptm-filter').textContent='SIN VERIFICAR';
   document.getElementById('ptm-market').textContent='SIN VERIFICAR';
   document.getElementById('pregame-json-status').textContent='Sin informe cargado para este partido.';
+} else {
+  // Invalid or changed player input must not retain an earlier match's statistics.
+  for(const row of reportFields.querySelectorAll('[data-key]')){
+   const value=row.querySelector('strong');value.textContent='SIN VERIFICAR';value.className='unknown';
+  }
+  document.getElementById('ptm-probability').textContent='SIN VERIFICAR';
+  document.getElementById('ptm-filter').textContent='SIN VERIFICAR';
+  document.getElementById('ptm-market').textContent='SIN VERIFICAR';
+  document.getElementById('pregame-json-status').textContent='Partido inválido; informe anterior descartado.';
 }
 });
 document.getElementById('market-us').addEventListener('click',async()=>{
