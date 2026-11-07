@@ -36,6 +36,13 @@ button:disabled{background:#53616b}.grid{display:grid;grid-template-columns:1fr 
 <div id="market-us-list" class="note"></div>
 <div class="stat"><span>Decisión</span><strong class="bad">DESCARTAR · $0</strong></div>
 <p class="note">Interfaz de desarrollo: la búsqueda de mercado es independiente del análisis estadístico. No calcula probabilidades sin evidencia verificable. Verde = dato favorable verificado; rojo = desfavorable verificado; gris = desconocido.</p>
+<details class="panel" id="report-json-diagnostic">
+<summary>Prueba técnica: cargar informe JSON PREGAME</summary>
+<p class="note muted">Solo para comprobar la conexión entre el motor estadístico y la pantalla. No obtiene datos automáticamente ni autentica la fuente.</p>
+<textarea id="pregame-json" maxlength="100000" placeholder='{"schema_version":"ptm-pregame-v1", ...}'></textarea>
+<button id="load-pregame-json" type="button" style="background:#30537a">MOSTRAR ESTADÍSTICAS OBSERVADAS</button>
+<p class="note muted" id="pregame-json-status" aria-live="polite">Sin informe cargado.</p>
+</details>
 </section>
 <script>
 const input=document.getElementById('match'), error=document.getElementById('error'), results=document.getElementById('results');
@@ -56,6 +63,39 @@ for(const [label,key] of REPORT_FIELDS){
  const value=document.createElement('strong');value.className='unknown';value.textContent='SIN VERIFICAR';
  row.append(name,value);reportFields.append(row);
 }
+// Diagnostic bridge only: read a locally supplied, explicitly unverified
+// Python PREGAME JSON result. Never infer authentication or approve the filter.
+document.getElementById('load-pregame-json').addEventListener('click',()=>{
+ const status=document.getElementById('pregame-json-status');
+ try{
+  const raw=document.getElementById('pregame-json').value;
+  if(!raw||raw.length>100000)throw new Error('Informe vacío o demasiado grande');
+  const p=JSON.parse(raw),parts=input.value.trim().split(/\\s+VS\\s+/i).map(s=>s.trim());
+  if(!p||p.schema_version!=='ptm-pregame-v1'||parts.length!==2||
+     p.player_a!==parts[0]||p.player_b!==parts[1])
+   throw new Error('Esquema o identidad del partido no coincide');
+  if(p.cutoff_enforced!==true||p.upstream_verified!==false||
+     p.model_probability_verified!==false||p.decision!=='DESCARTAR'||p.amount_usd!==0||
+     !Number.isInteger(p.observed_rows)||p.observed_rows<0||p.observed_rows>200||
+     !p.statistics||typeof p.statistics!=='object'||Array.isArray(p.statistics))
+   throw new Error('Evidencia o estado no compatible con modo seguro');
+  const values={};
+  for(const [,key] of REPORT_FIELDS){
+   const v=p.statistics[key];
+   if(typeof v!=='string'||v.length>4000)throw new Error('Campo inválido: '+key);
+   values[key]=v||'SIN VERIFICAR';
+  }
+  for(const row of reportFields.querySelectorAll('[data-key]')){
+   const value=row.querySelector('strong');value.textContent=values[row.dataset.key];
+   value.className='unknown';
+  }
+  document.getElementById('ptm-probability').textContent='SIN VERIFICAR';
+  document.getElementById('ptm-filter').textContent='SIN VERIFICAR';
+  document.getElementById('ptm-market').textContent='SIN VERIFICAR';
+  status.textContent='Informe descriptivo cargado: '+p.observed_rows+
+   ' partidos anteriores observados. Procedencia NO autenticada; filtro 70% SIN VERIFICAR; DESCARTAR · $0.';
+ }catch(e){status.textContent='No se cargó el informe: '+String(e.message||'error')+'. DESCARTAR · $0.';}
+});
 document.getElementById('copy-request').addEventListener('click',async()=>{
  const parts=input.value.trim().split(/\s+VS\s+/i).map(s=>s.trim());
  if(parts.length!==2||parts.some(s=>s.length<3)){document.getElementById('copy-status').textContent='Primero identifica un partido.';return;}
@@ -68,7 +108,18 @@ document.getElementById('analyze').addEventListener('click',()=>{
  const parts=input.value.trim().split(/\s+VS\s+/i).map(s=>s.trim());
  const valid=parts.length===2&&parts.every(s=>s.length>=3&&s.length<=120);
  error.classList.toggle('hidden',valid);results.classList.toggle('hidden',!valid);
- if(valid){document.getElementById('name1').textContent=parts[0];document.getElementById('name2').textContent=parts[1];marketStatus.textContent='Mercado aún no consultado.';marketList.replaceChildren();}
+ if(valid){
+  document.getElementById('name1').textContent=parts[0];
+  document.getElementById('name2').textContent=parts[1];
+  marketStatus.textContent='Mercado aún no consultado.';marketList.replaceChildren();
+  for(const row of reportFields.querySelectorAll('[data-key]')){
+   const value=row.querySelector('strong');value.textContent='SIN VERIFICAR';value.className='unknown';
+  }
+  document.getElementById('ptm-probability').textContent='SIN VERIFICAR';
+  document.getElementById('ptm-filter').textContent='SIN VERIFICAR';
+  document.getElementById('ptm-market').textContent='SIN VERIFICAR';
+  document.getElementById('pregame-json-status').textContent='Sin informe cargado para este partido.';
+}
 });
 document.getElementById('market-us').addEventListener('click',async()=>{
  const parts=input.value.trim().split(/\s+VS\s+/i).map(s=>s.trim());
