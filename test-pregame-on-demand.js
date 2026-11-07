@@ -32,4 +32,12 @@ assert.throws(() => globalThis.PTMOnDemand.analyze(input([
   row("future", [[11,8],[11,8],[11,8]], "2026-11-07T17:30:00Z")
 ])), /evidencia futura/);
 assert.equal(globalThis.PTMOnDemand.analyze(input([])).observed_rows, 0);
+// The on-demand ChatGPT handoff must remain available without a paid dataset.
+const html = require("node:fs").readFileSync(require("node:path").join(__dirname, "index.html"), "utf8");
+assert.match(html, /COPIAR SOLICITUD PREGAME \+ JSON PARA IPHONE/);
+assert.match(html, /schema_version:'ptm-pregame-v1'/);
+assert.match(html, /cutoff_enforced:false/);
+assert.match(html, /model_probability_verified:false/);
+assert.match(html, /upstream_verified:false/);
+assert.match(html, /Pegar informe PREGAME de ChatGPT/);
 console.log("PREGAME on-demand offline regression: PASS (synthetic only)");
