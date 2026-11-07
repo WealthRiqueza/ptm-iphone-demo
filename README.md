@@ -43,3 +43,19 @@ Prueba adicional: `node test_pregame_authorized_fetch.js` (navegador simulado y 
 3. E2E con red real en Safari/iPhone y CI verde en el motor principal.
 
 No exigir dataset histórico permanente ni pasos avanzados 17–19 para V1. No scraping masivo, compras, apuestas ni LIVE/RADAR durante esta fase.
+
+## Prueba E2E de navegador (7 nov, tarde Miami)
+
+Además de las pruebas Node con DOM simulado, el repositorio ahora incluye `test_pregame_browser_e2e.cjs` y el workflow `pregame_v1_webkit_e2e.yml`. Ejecuta Chromium y WebKit **reales** en un runner Linux y comprueba: identificación de jugadores, 14 campos, cálculo local desde resultados sintéticos, importación manual de informe ChatGPT sin hora, rechazo de cifras inválidas, limpieza de estadísticas al cambiar el partido y una sola consulta HTTPS **simulada** con CORS.
+
+Para ejecutar localmente con Node 22:
+
+```sh
+npm install --no-save playwright
+npx playwright install --with-deps chromium webkit
+node test_pregame_browser_e2e.cjs
+```
+
+**Limitación:** WebKit en Linux no equivale a Safari físico en iPhone. La respuesta HTTPS de esta prueba está interceptada y es sintética; tampoco demuestra un proveedor Setka real ni probabilidad independiente validada. El workflow solo cuenta como aprobado cuando GitHub Actions confirme `success`.
+
+El importador también rechaza partidos con sets adicionales después de que alguien ganó tres sets, y exige captura **estrictamente anterior** al inicio. Un error al importar el JSON generado ya no debe mostrar un falso mensaje de cálculo exitoso.
