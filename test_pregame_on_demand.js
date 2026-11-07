@@ -32,7 +32,7 @@ assert.equal(report.model_probability_verified,false);
 assert.equal(report.decision,"DESCARTAR");
 assert.equal(report.amount_usd,0);
 let x=fixture();x.provenance.captured_at_utc="2026-11-07T19:00:00Z";
-assert.throws(()=>analyze(x),/Captura posterior/);
+assert.throws(()=>analyze(x),/Captura en o después/);
 x=fixture();x.provenance.captured_at_utc=x.scheduled_at_utc;
 assert.throws(()=>analyze(x),/en o después/);
 x=fixture();x.matches.push(x.matches[0]);
