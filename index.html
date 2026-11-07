@@ -24,6 +24,8 @@ button:disabled{background:#53616b}.grid{display:grid;grid-template-columns:1fr 
 <h2 style="font-size:1.05rem">Informe PTM 3.3 · PREGAME bajo demanda</h2>
 <p class="note muted">Las estadísticas se completan únicamente al contar con observaciones verificadas. Sin conexión a una fuente, quedan SIN VERIFICAR.</p>
 <div id="report-fields" aria-live="polite"></div>
+<div class="stat"><span>Hora programada (Miami)</span><strong class="unknown" id="ptm-scheduled">SIN VERIFICAR</strong></div>
+<p class="note muted" id="ptm-provenance">Procedencia de resultados: SIN VERIFICAR.</p>
 <div class="stat"><span>Probabilidad independiente PTM</span><strong class="unknown" id="ptm-probability">SIN VERIFICAR</strong></div>
 <div class="stat"><span>Filtro PTM ≥70%</span><strong class="bad" id="ptm-filter">SIN VERIFICAR</strong></div>
 <div class="stat"><span>Polymarket / Kalshi / edge neto</span><strong class="unknown" id="ptm-market">SIN VERIFICAR</strong></div>
@@ -92,8 +94,20 @@ document.getElementById('load-pregame-json').addEventListener('click',()=>{
    value.className='unknown';
   }
   document.getElementById('ptm-probability').textContent='SIN VERIFICAR';
+  document.getElementById('ptm-scheduled').textContent='SIN VERIFICAR';
+  document.getElementById('ptm-provenance').textContent='Procedencia de resultados: SIN VERIFICAR.';
   document.getElementById('ptm-filter').textContent='SIN VERIFICAR';
   document.getElementById('ptm-market').textContent='SIN VERIFICAR';
+  const scheduled=typeof p.scheduled_at_utc==='string'?new Date(p.scheduled_at_utc):null;
+  document.getElementById('ptm-scheduled').textContent=
+   scheduled&&Number.isFinite(scheduled.getTime())?
+   scheduled.toLocaleString('es-US',{timeZone:'America/New_York',dateStyle:'medium',timeStyle:'short'}):'SIN VERIFICAR';
+  const prov=p.provenance;
+  const provenanceValid=prov&&typeof prov==='object'&&typeof prov.source_url==='string'&&
+   prov.source_url.startsWith('https://')&&typeof prov.captured_at_utc==='string';
+  document.getElementById('ptm-provenance').textContent=provenanceValid?
+   'Fuente declarada (NO autenticada): '+prov.source_url+' · Captura UTC: '+prov.captured_at_utc:
+   'Procedencia de resultados: SIN VERIFICAR.';
   status.textContent='Informe descriptivo cargado: '+p.observed_rows+
    ' partidos anteriores observados. Procedencia NO autenticada; filtro 70% SIN VERIFICAR; DESCARTAR · $0.';
  }catch(e){status.textContent='No se cargó el informe: '+String(e.message||'error')+'. DESCARTAR · $0.';}
@@ -131,6 +145,8 @@ document.getElementById('analyze').addEventListener('click',()=>{
    const value=row.querySelector('strong');value.textContent='SIN VERIFICAR';value.className='unknown';
   }
   document.getElementById('ptm-probability').textContent='SIN VERIFICAR';
+  document.getElementById('ptm-scheduled').textContent='SIN VERIFICAR';
+  document.getElementById('ptm-provenance').textContent='Procedencia de resultados: SIN VERIFICAR.';
   document.getElementById('ptm-filter').textContent='SIN VERIFICAR';
   document.getElementById('ptm-market').textContent='SIN VERIFICAR';
   document.getElementById('pregame-json-status').textContent='Sin informe cargado para este partido.';
@@ -140,6 +156,8 @@ document.getElementById('analyze').addEventListener('click',()=>{
    const value=row.querySelector('strong');value.textContent='SIN VERIFICAR';value.className='unknown';
   }
   document.getElementById('ptm-probability').textContent='SIN VERIFICAR';
+  document.getElementById('ptm-scheduled').textContent='SIN VERIFICAR';
+  document.getElementById('ptm-provenance').textContent='Procedencia de resultados: SIN VERIFICAR.';
   document.getElementById('ptm-filter').textContent='SIN VERIFICAR';
   document.getElementById('ptm-market').textContent='SIN VERIFICAR';
   document.getElementById('pregame-json-status').textContent='Partido inválido; informe anterior descartado.';
