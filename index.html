@@ -47,7 +47,18 @@ button:disabled{background:#53616b}.grid{display:grid;grid-template-columns:1fr 
 <button id="load-pregame-json" type="button" style="background:#30537a">MOSTRAR ESTADÍSTICAS OBSERVADAS</button>
 <p class="note muted" id="pregame-json-status" aria-live="polite">Sin informe cargado.</p>
 </details>
+<details class="panel" id="raw-results-on-demand">
+<summary>Importar resultados autorizados y generar PREGAME aquí mismo</summary>
+<p class="note muted">Acepta hasta 200 resultados con puntos por set, URL de origen, permiso declarado, hora de captura y hora programada. Procesamiento local en el iPhone, sin subir archivos ni extraer páginas automáticamente. La declaración de permiso NO autentica la fuente: probabilidad PTM y filtro 70% permanecen SIN VERIFICAR.</p>
+<label for="pregame-source-json" class="note">Resultados en formato JSON (player_a, player_b, scheduled_at_utc, provenance, matches):</label>
+<textarea id="pregame-source-json" maxlength="150000" placeholder='{"player_a":"...","player_b":"...","scheduled_at_utc":"2026-11-07T18:00:00Z","provenance":{"source_url":"https://...","permission":"user-provided","captured_at_utc":"2026-11-07T17:00:00Z"},"matches":[]}'></textarea>
+<label for="pregame-source-file" class="note">O elige un archivo JSON de resultados desde Archivos:</label>
+<input type="file" id="pregame-source-file" accept=".json,application/json" style="display:block;width:100%;margin-top:8px">
+<button id="generate-pregame" type="button" style="background:#30537a">CALCULAR INDICADORES DESDE RESULTADOS</button>
+<p class="note muted" id="pregame-source-status" aria-live="polite">Sin resultados importados. Fuente externa automática pendiente.</p>
+</details>
 </section>
+<script src="pregame-on-demand.js"></script>
 <script>
 const input=document.getElementById('match'), error=document.getElementById('error'), results=document.getElementById('results');
 const marketButton=document.getElementById('market'), marketStatus=document.getElementById('market-status'), marketList=document.getElementById('market-list');
@@ -67,10 +78,21 @@ for(const [label,key] of REPORT_FIELDS){
  const value=document.createElement('strong');value.className='unknown';value.textContent='SIN VERIFICAR';
  row.append(name,value);reportFields.append(row);
 }
+function clearPregameFields(){
+ for(const row of reportFields.querySelectorAll('[data-key]')){
+  const value=row.querySelector('strong');value.textContent='SIN VERIFICAR';value.className='unknown';
+ }
+ document.getElementById('ptm-probability').textContent='SIN VERIFICAR';
+ document.getElementById('ptm-scheduled').textContent='SIN VERIFICAR';
+ document.getElementById('ptm-provenance').textContent='Procedencia de resultados: SIN VERIFICAR.';
+ document.getElementById('ptm-filter').textContent='SIN VERIFICAR';
+ document.getElementById('ptm-market').textContent='SIN VERIFICAR';
+}
 // Diagnostic bridge only: read a locally supplied, explicitly unverified
 // Python PREGAME JSON result. Never infer authentication or approve the filter.
 document.getElementById('load-pregame-json').addEventListener('click',()=>{
  const status=document.getElementById('pregame-json-status');
+ clearPregameFields();
  try{
   const raw=document.getElementById('pregame-json').value;
   if(!raw||raw.length>100000)throw new Error('Informe vacío o demasiado grande');
@@ -124,6 +146,47 @@ document.getElementById('pregame-json-file').addEventListener('change',async(eve
   document.getElementById('pregame-json').value=raw;
   document.getElementById('load-pregame-json').click();
  }catch(err){status.textContent='No se pudo leer el archivo local ('+String(err.message||'error')+'). DESCARTAR · $0.';}
+});
+// Full client-side descriptive bridge from user-provided match records to the same report.
+// This does not authenticate a source or calculate an independently validated probability.
+function calculateLocalPregame(raw){
+ const p=JSON.parse(raw);
+ const parts=input.value.trim().split(/\s+VS\s+/i).map(s=>s.trim());
+ if(parts.length!==2||p.player_a!==parts[0]||p.player_b!==parts[1])
+  throw new Error('Los nombres del archivo no coinciden con el partido identificado');
+ if(!globalThis.PTMOnDemand||typeof globalThis.PTMOnDemand.analyze!=='function')
+  throw new Error('Motor local no disponible');
+ const result=globalThis.PTMOnDemand.analyze(p);
+ document.getElementById('pregame-json').value=JSON.stringify(result);
+ document.getElementById('load-pregame-json').click();
+ document.getElementById('pregame-source-status').textContent=
+  'Calculados '+result.observed_rows+' resultados anteriores en este dispositivo. Fuente declarada, NO autenticada. DESCARTAR · $0.';
+}
+document.getElementById('generate-pregame').addEventListener('click',()=>{
+ try{
+  const raw=document.getElementById('pregame-source-json').value;
+  if(!raw||raw.length>150000)throw new Error('JSON vacío o demasiado grande');
+  calculateLocalPregame(raw);
+ }catch(err){
+  clearPregameFields();
+  document.getElementById('pregame-source-status').textContent=
+   'No se pudo calcular: '+String(err.message||'error')+'. DESCARTAR · $0.';
+ }
+});
+document.getElementById('pregame-source-file').addEventListener('change',async(event)=>{
+ const file=event.target.files&&event.target.files[0];
+ if(!file)return;
+ try{
+  if(file.size>150000)throw new Error('Archivo mayor de 150 KB');
+  const raw=await file.text();
+  if(raw.length>150000)throw new Error('Archivo demasiado grande');
+  document.getElementById('pregame-source-json').value=raw;
+  calculateLocalPregame(raw);
+ }catch(err){
+  clearPregameFields();
+  document.getElementById('pregame-source-status').textContent=
+   'Archivo rechazado: '+String(err.message||'error')+'. DESCARTAR · $0.';
+ }
 });
 document.getElementById('copy-request').addEventListener('click',async()=>{
  const parts=input.value.trim().split(/\s+VS\s+/i).map(s=>s.trim());
