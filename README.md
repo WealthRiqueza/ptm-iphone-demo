@@ -28,8 +28,17 @@ node test_pregame_on_demand.js
 
 Esta prueba usa datos sintéticos únicamente para validar la interfaz, no el rendimiento predictivo ni Safari real. El nuevo `test_pregame_on_demand.js` contiene 17 aserciones offline; en esta revisión se ejecutaron las mismas aserciones en V8 y pasaron. La ejecución de Node en GitHub Actions y la prueba Safari real siguen sin verificarse.
 
+
+## Consulta puntual HTTPS desde iPhone (7 nov, 14:28 Miami)
+
+La pantalla ahora permite **consultar un endpoint JSON HTTPS autorizado** desde el panel «Importar resultados autorizados». Introduce un URL que devuelva el objeto de resultados documentado arriba y pulsa **CONSULTAR JSON AUTORIZADO Y CALCULAR**. La petición ocurre una sola vez al pulsar el botón, sin cookies, sin credenciales, sin redirecciones y con tiempo máximo de 10 segundos. El proveedor debe permitir CORS desde GitHub Pages y devolver un JSON de hasta 150 KB con identidad exacta, fecha de captura anterior al partido y partidos previos completos. La página calcula y muestra los 14 campos localmente; si hay error, mantiene `SIN VERIFICAR / DESCARTAR / $0`.
+
+Esto habilita la **integración genérica con una fuente autorizada que entregue el formato**, pero **no incluye un proveedor Setka preconfigurado, licencia de datos ni autenticación independiente de la procedencia**. No calcula aún una probabilidad PTM verificada. No introduzcas tokens ni datos privados en URLs. No se realizan compras ni apuestas.
+
+Prueba adicional: `node test_pregame_authorized_fetch.js` (navegador simulado y datos sintéticos). El CI iPhone «PREGAME V1 iPhone offline checks» del commit `f18cd3b` reportó **success** el 7 nov 2026; eso no equivale a Safari real ni a un feed de resultados reales.
+
 ## Lo que todavía falta para entregar V1
-1. Conector de consulta puntual, legítima y automática de resultados históricos reales de los dos jugadores.
+1. Seleccionar y verificar un proveedor real autorizado con respuesta compatible y CORS; el lector genérico HTTPS ya está conectado, pero no hay feed Setka validado.
 2. Estimación de probabilidad PTM independiente con evidencia y validación; filtro >=70% sin depender del precio de mercado.
 3. E2E con red real en Safari/iPhone y CI verde en el motor principal.
 
