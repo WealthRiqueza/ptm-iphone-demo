@@ -43,6 +43,7 @@ async function testBrowser(type) {
   assert.equal(await page.locator("#report-fields [data-key]").count(),14);
 
   // Raw observations -> 14 descriptive fields; never approve 70% or any amount.
+  await page.locator("#raw-results-on-demand summary").click();
   await page.locator("#pregame-source-json").fill(JSON.stringify(source()));
   await page.locator("#generate-pregame").click();
   assert.match(await page.locator("#pregame-source-status").textContent(),/Calculados 2/);
@@ -58,6 +59,7 @@ async function testBrowser(type) {
   assert.equal(await page.locator('[data-key="h2h_historico"] strong').textContent(),"SIN VERIFICAR");
 
   // ChatGPT display-only report works without a scheduled kickoff.
+  await page.locator("#report-json-diagnostic summary").click();
   await page.locator("#pregame-json").fill(JSON.stringify(manual()));
   await page.locator("#load-pregame-json").click();
   assert.match(await page.locator("#pregame-json-status").textContent(),/Informe manual de ChatGPT cargado/);
@@ -77,7 +79,7 @@ async function testBrowser(type) {
   });
   await page.locator("#pregame-source-url").fill("https://ptm-fixture.example/match.json");
   await page.locator("#fetch-pregame-source").click();
-  await page.waitForFunction(()=>document.getElementById("pregame-source-status").textContent.includes("Consulta puntual HTTPS completada"),{timeout:12000});
+  await page.waitForFunction(()=>document.getElementById("pregame-source-status").textContent.includes("Consulta puntual HTTPS completada"),null,{timeout:12000});
   assert.equal(requests,1);
   assert.match(await page.locator('[data-key="h2h_historico"] strong').textContent(),/1 - 1/);
   assert.equal(await page.locator("#ptm-filter").textContent(),"SIN VERIFICAR");
