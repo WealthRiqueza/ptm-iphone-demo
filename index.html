@@ -40,6 +40,8 @@ button:disabled{background:#53616b}.grid{display:grid;grid-template-columns:1fr 
 <summary>Prueba técnica: cargar informe JSON PREGAME</summary>
 <p class="note muted">Solo para comprobar la conexión entre el motor estadístico y la pantalla. No obtiene datos automáticamente ni autentica la fuente.</p>
 <textarea id="pregame-json" maxlength="100000" placeholder='{"schema_version":"ptm-pregame-v1", ...}'></textarea>
+<label for="pregame-json-file" class="note">O selecciona un informe .json guardado en Archivos (iPhone):</label>
+<input type="file" id="pregame-json-file" accept=".json,application/json" aria-label="Seleccionar informe PREGAME JSON" style="display:block;width:100%;margin-top:8px">
 <button id="load-pregame-json" type="button" style="background:#30537a">MOSTRAR ESTADÍSTICAS OBSERVADAS</button>
 <p class="note muted" id="pregame-json-status" aria-live="polite">Sin informe cargado.</p>
 </details>
@@ -95,6 +97,19 @@ document.getElementById('load-pregame-json').addEventListener('click',()=>{
   status.textContent='Informe descriptivo cargado: '+p.observed_rows+
    ' partidos anteriores observados. Procedencia NO autenticada; filtro 70% SIN VERIFICAR; DESCARTAR · $0.';
  }catch(e){status.textContent='No se cargó el informe: '+String(e.message||'error')+'. DESCARTAR · $0.';}
+});
+// Local iPhone Files import: no upload to a server and no automatic source authentication.
+document.getElementById('pregame-json-file').addEventListener('change',async(event)=>{
+ const status=document.getElementById('pregame-json-status');
+ const file=event.target.files&&event.target.files[0];
+ if(!file)return;
+ if(file.size>100000){status.textContent='Archivo demasiado grande (máximo 100 KB). DESCARTAR · $0.';return;}
+ try{
+  const raw=await file.text();
+  if(raw.length>100000)throw new Error('Archivo demasiado grande');
+  document.getElementById('pregame-json').value=raw;
+  document.getElementById('load-pregame-json').click();
+ }catch(err){status.textContent='No se pudo leer el archivo local ('+String(err.message||'error')+'). DESCARTAR · $0.';}
 });
 document.getElementById('copy-request').addEventListener('click',async()=>{
  const parts=input.value.trim().split(/\s+VS\s+/i).map(s=>s.trim());
