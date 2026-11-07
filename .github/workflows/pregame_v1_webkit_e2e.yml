@@ -1,0 +1,31 @@
+name: PREGAME V1 browser E2E (Chromium and WebKit)
+on:
+  push:
+    paths:
+      - 'index.html'
+      - 'pregame-on-demand.js'
+      - 'test_pregame_browser_e2e.cjs'
+      - '.github/workflows/pregame_v1_webkit_e2e.yml'
+  pull_request:
+    paths:
+      - 'index.html'
+      - 'pregame-on-demand.js'
+      - 'test_pregame_browser_e2e.cjs'
+      - '.github/workflows/pregame_v1_webkit_e2e.yml'
+jobs:
+  browser-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Playwright and browsers
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium webkit
+      - name: Browser-level PREGAME smoke (synthetic and mocked only)
+        run: node test_pregame_browser_e2e.cjs
