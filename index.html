@@ -101,6 +101,7 @@ function clearPregameFields(){
 document.getElementById('load-pregame-json').addEventListener('click',()=>{
  const status=document.getElementById('pregame-json-status');
  clearPregameFields();
+ status.dataset.loaded='false';
  try{
   const raw=document.getElementById('pregame-json').value;
   if(!raw||raw.length>100000)throw new Error('Informe vacío o demasiado grande');
@@ -148,6 +149,7 @@ document.getElementById('load-pregame-json').addEventListener('click',()=>{
    'Informe manual de ChatGPT cargado (14 indicadores). Horarios, cifras y fuentes NO autenticados; filtro 70% SIN VERIFICAR; DESCARTAR · $0.':
    'Informe descriptivo cargado: '+p.observed_rows+
    ' partidos anteriores observados. Procedencia NO autenticada; filtro 70% SIN VERIFICAR; DESCARTAR · $0.';
+  status.dataset.loaded='true';
  }catch(e){status.textContent='No se cargó el informe: '+String(e.message||'error')+'. DESCARTAR · $0.';}
 });
 // Local iPhone Files import: no upload to a server and no automatic source authentication.
@@ -175,6 +177,8 @@ function calculateLocalPregame(raw){
  const result=globalThis.PTMOnDemand.analyze(p);
  document.getElementById('pregame-json').value=JSON.stringify(result);
  document.getElementById('load-pregame-json').click();
+ if(document.getElementById('pregame-json-status').dataset.loaded!=='true')
+  throw new Error('El informe generado no superó la validación de importación');
  document.getElementById('pregame-source-status').textContent=
   'Calculados '+result.observed_rows+' resultados anteriores en este dispositivo. Fuente declarada, NO autenticada. DESCARTAR · $0.';
 }
