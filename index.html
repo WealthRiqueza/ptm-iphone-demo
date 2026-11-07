@@ -57,7 +57,7 @@ for(const [label,key] of REPORT_FIELDS){
  row.append(name,value);reportFields.append(row);
 }
 document.getElementById('copy-request').addEventListener('click',async()=>{
- const parts=input.value.trim().split(/\\s+VS\\s+/i).map(s=>s.trim());
+ const parts=input.value.trim().split(/\s+VS\s+/i).map(s=>s.trim());
  if(parts.length!==2||parts.some(s=>s.length<3)){document.getElementById('copy-status').textContent='Primero identifica un partido.';return;}
  const request='PREGAME PTM 3.3 para '+parts[0]+' VS '+parts[1]+'. Consulta datos al momento en fuentes públicas permitidas: H2H total y reciente con fechas/sets, últimos 10/5, conversión del primer set, remontadas, quinto set H2H y general, rivales comunes, fatiga, alertas de sorpresa y contradicción, cuotas externas, Polymarket y Kalshi separados. Probabilidad PTM INDEPENDIENTE con evidencia y filtro mínimo 70%; sin evidencia marca SIN VERIFICAR y DESCARTAR. Hora Miami únicamente. Decisión ultra corta. No inventes cifras, no operar $0.';
  try{await navigator.clipboard.writeText(request);document.getElementById('copy-status').textContent='Solicitud copiada. Pégala en ChatGPT para consultar el PREGAME.';}
@@ -71,7 +71,7 @@ document.getElementById('analyze').addEventListener('click',()=>{
  if(valid){document.getElementById('name1').textContent=parts[0];document.getElementById('name2').textContent=parts[1];marketStatus.textContent='Mercado aún no consultado.';marketList.replaceChildren();}
 });
 document.getElementById('market-us').addEventListener('click',async()=>{
- const parts=input.value.trim().split(/\\s+VS\\s+/i).map(s=>s.trim());
+ const parts=input.value.trim().split(/\s+VS\s+/i).map(s=>s.trim());
  const status=document.getElementById('market-us-status');
  const list=document.getElementById('market-us-list');
  const button=document.getElementById('market-us');
@@ -79,14 +79,14 @@ document.getElementById('market-us').addEventListener('click',async()=>{
  button.disabled=true;status.textContent='Consultando API pública de Polymarket US…';list.replaceChildren();
  const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),10000);
  try{
-  const query=parts.map(s=>s.split(/\\s+/)[0]).join(' ');
+  const query=parts.map(s=>s.split(/\s+/)[0]).join(' ');
   const url='https://gateway.polymarket.us/v1/search?query='+encodeURIComponent(query)+'&limit=20';
   const response=await fetch(url,{signal:controller.signal,headers:{accept:'application/json'}});
   if(!response.ok)throw new Error('HTTP '+response.status);
   const data=await response.json();
   if(!data||!Array.isArray(data.events))throw new Error('Esquema inesperado');
-  const norm=s=>String(s||'').normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').toLowerCase();
-  const surnames=parts.map(s=>norm(s.split(/\\s+/)[0]));
+  const norm=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+  const surnames=parts.map(s=>norm(s.split(/\s+/)[0]));
   const events=data.events.filter(e=>{
    if(!e||typeof e!=='object')return false;
    const tokens=norm([e.title,e.subtitle,e.slug].join(' ')).split(/[^a-z0-9]+/).filter(Boolean);
