@@ -14,7 +14,7 @@
  const https = x => typeof x === "string" && /^https:\/\/[^/\s]+/i.test(x);
  const rate = (w,n) => n ? w+"/"+n+" ("+Math.round(100*w/n)+"%)" : "SIN VERIFICAR";
  const pairs = (a,b,ra,rb) => a+": "+ra+" | "+b+": "+rb;
- const miamiDate = ms => new Intl.DateTimeFormat("en-CA",{timeZone:"America/New_York",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date(ms));
+ const miamiDate = ms => {const p=new Intl.DateTimeFormat("en-US",{timeZone:"America/New_York",year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(new Date(ms));const get=k=>p.find(v=>v.type===k).value;return get("year")+"-"+get("month")+"-"+get("day");};
  function analyze(p) {
    if (!p || typeof p !== "object" || Array.isArray(p)) throw Error("Objeto JSON requerido");
    const a = clean(p.player_a), b = clean(p.player_b);
