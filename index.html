@@ -194,10 +194,10 @@ document.getElementById('fetch-pregame-source').addEventListener('click',async()
   if(url.protocol!=='https:'||url.username||url.password||url.hash)
    throw new Error('Se requiere HTTPS sin credenciales ni fragmentos');
   if(url.hostname==='localhost'||url.hostname.endsWith('.local')||
-     /^127\\./.test(url.hostname)||url.hostname==='[::1]')
+     /^127\./.test(url.hostname)||url.hostname==='[::1]')
    throw new Error('Dirección local no permitida');
  }catch(e){clearPregameFields();status.textContent='URL rechazada: '+String(e.message||'inválida')+'. DESCARTAR · $0.';return;}
- const parts=input.value.trim().split(/\\s+VS\\s+/i).map(s=>s.trim());
+ const parts=input.value.trim().split(/\s+VS\s+/i).map(s=>s.trim());
  if(parts.length!==2||parts.some(s=>s.length<3)){clearPregameFields();status.textContent='Identifica primero el partido. DESCARTAR · $0.';return;}
  button.disabled=true;clearPregameFields();status.textContent='Consultando una sola vez el endpoint autorizado…';
  const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),10000);
