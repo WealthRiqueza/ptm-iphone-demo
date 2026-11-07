@@ -4,6 +4,7 @@ on:
     paths:
       - 'pregame-on-demand.js'
       - 'test_pregame_on_demand.js'
+      - 'test_pregame_authorized_fetch.js'
       - 'index.html'
       - '.github/workflows/pregame_v1_browser.yml'
   pull_request:
@@ -24,6 +25,8 @@ jobs:
           node-version: '22'
       - name: Run offline PREGAME engine tests
         run: node test_pregame_on_demand.js
+      - name: Authorized endpoint browser logic smoke (synthetic)
+        run: node test_pregame_authorized_fetch.js
       - name: Check inline iPhone JavaScript syntax
         run: |
           node - <<'NODE'
