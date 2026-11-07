@@ -39,7 +39,8 @@
      const wins=[0,0], sets=[];
      for (const s of m.sets) {
        if (!Array.isArray(s) || s.length!==2 || s.some(v=>!Number.isInteger(v)||v<0) ||
-           Math.max(...s)<11 || Math.abs(s[0]-s[1])<2) throw Error("Puntos de set inválidos");
+           !((Math.max(...s)===11 && Math.min(...s)<=9) ||
+           (Math.max(...s)>=12 && Math.min(...s)===Math.max(...s)-2))) throw Error("Puntos de set inválidos");
        wins[s[0]>s[1]?0:1]++;
        sets.push([s[0],s[1]]);
      }
