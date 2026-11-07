@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PTM 3.3 · PREGAME</title><style>
+:root{color-scheme:dark;font-family:system-ui,-apple-system,sans-serif;background:#0b1420;color:#eef4fa}
+*{box-sizing:border-box}body{margin:0;padding:22px;max-width:680px;margin-inline:auto}
+h1{margin:0;font-size:1.55rem}small,.muted{color:#9eacbd}.panel{background:#142333;border:1px solid #304356;border-radius:17px;padding:17px;margin-top:18px}
+textarea{width:100%;font:inherit;resize:vertical;min-height:110px;background:#091723;color:white;border:1px solid #567084;border-radius:10px;padding:13px;margin-top:12px}
+button{width:100%;padding:16px;margin-top:12px;border:0;border-radius:12px;background:#21a16c;color:#fff;font-size:1.05rem;font-weight:750}
+button:disabled{background:#53616b}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.player{border:2px solid #637487;border-radius:12px;padding:12px;overflow-wrap:anywhere}
+.player.favorite{border-color:#22bd7b;background:#103d30}.player.underdog{border-color:#e85d62;background:#4a222b}
+.good{color:#4ae19c}.bad{color:#ff777b}.unknown{color:#aab5c2}.tag{font-size:.72rem;letter-spacing:.04em;text-transform:uppercase;font-weight:750}
+.stat{display:flex;justify-content:space-between;gap:10px;border-top:1px solid #344657;padding:10px 0}
+.hidden{display:none}.note{font-size:.84rem;line-height:1.5}
+</style></head><body>
+<h1>🐅 PTM BOT 3.3</h1><small>PREGAME · Vista móvil · NO OPERAR | $0</small>
+<section class="panel"><label for="match"><strong>Pega el partido de Polymarket</strong></label>
+<textarea id="match" placeholder="DUKHOVENKO OLEKSANDR VS&#10;REZNYCHENKO ROMAN"></textarea>
+<button id="analyze">IDENTIFICAR PARTIDO</button><p id="error" class="bad hidden" role="alert">Pega dos jugadores separados por VS.</p></section>
+<section class="panel hidden" id="results"><strong>Partido identificado</strong>
+<div class="grid"><div class="player" id="left"><div class="tag unknown">SIN VERIFICAR</div><h3 id="name1"></h3></div>
+<div class="player" id="right"><div class="tag unknown">SIN VERIFICAR</div><h3 id="name2"></h3></div></div>
+<p class="note muted">Los colores de favorito/desfavorito se activarán solamente al recibir probabilidades PTM verificadas. Esta pantalla no inventa estadísticas.</p>
+<div class="stat"><span>Probabilidad independiente PTM</span><strong class="unknown">SIN VERIFICAR</strong></div>
+<div class="stat"><span>Forma reciente · H2H · remontadas</span><strong class="unknown">SIN VERIFICAR</strong></div>
+<div class="stat"><span>Polymarket · precio · edge</span><strong class="unknown">SIN VERIFICAR</strong></div>
+<div class="stat"><span>Decisión</span><strong class="bad">DESCARTAR · $0</strong></div>
+<p class="note">Interfaz de demostración local: todavía no conecta consultas en vivo ni calcula probabilidades. Verde = dato favorable verificado; rojo = desfavorable verificado; gris = desconocido.</p>
+</section>
+<script>
+const input=document.getElementById('match'), error=document.getElementById('error'), results=document.getElementById('results');
+document.getElementById('analyze').addEventListener('click',()=>{
+ const parts=input.value.trim().split(/\s+VS\s+/i).map(s=>s.trim());
+ const valid=parts.length===2&&parts.every(s=>s.length>=3&&s.length<=120);
+ error.classList.toggle('hidden',valid);results.classList.toggle('hidden',!valid);
+ if(valid){document.getElementById('name1').textContent=parts[0];document.getElementById('name2').textContent=parts[1];}
+});
+</script></body></html>
