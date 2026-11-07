@@ -1,0 +1,36 @@
+name: PREGAME V1 iPhone offline checks
+on:
+  push:
+    paths:
+      - 'pregame-on-demand.js'
+      - 'test_pregame_on_demand.js'
+      - 'index.html'
+      - '.github/workflows/pregame_v1_browser.yml'
+  pull_request:
+    paths:
+      - 'pregame-on-demand.js'
+      - 'test_pregame_on_demand.js'
+      - 'index.html'
+      - '.github/workflows/pregame_v1_browser.yml'
+jobs:
+  browser-engine:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run offline PREGAME engine tests
+        run: node test_pregame_on_demand.js
+      - name: Check inline iPhone JavaScript syntax
+        run: |
+          node - <<'NODE'
+          const fs=require('node:fs');
+          const html=fs.readFileSync('index.html','utf8');
+          const scripts=[...html.matchAll(/<script>([\s\S]*?)<\/script>/g)];
+          if(scripts.length!==1)throw Error('Expected one inline application script');
+          new Function(scripts[0][1]);
+          console.log('Inline iPhone script syntax PASS');
+          NODE
