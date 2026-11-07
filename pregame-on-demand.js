@@ -37,11 +37,13 @@
      if (played>captured) throw Error("Resultado posterior a captura: evidencia futura");
      if (!Array.isArray(m.sets) || m.sets.length<3 || m.sets.length>5) throw Error("Sets incompletos");
      const wins=[0,0], sets=[];
-     for (const s of m.sets) {
+     for (const [setIndex,s] of m.sets.entries()) {
        if (!Array.isArray(s) || s.length!==2 || s.some(v=>!Number.isInteger(v)||v<0) ||
            !((Math.max(...s)===11 && Math.min(...s)<=9) ||
            (Math.max(...s)>=12 && Math.min(...s)===Math.max(...s)-2))) throw Error("Puntos de set inválidos");
        wins[s[0]>s[1]?0:1]++;
+       if(Math.max(...wins)===3 && setIndex!==m.sets.length-1)
+         throw Error("Partido continuó después de ganar el tercer set");
        sets.push([s[0],s[1]]);
      }
      if (Math.max(...wins)!==3 || Math.min(...wins)!==sets.length-3) throw Error("Marcador de partido inconsistente");
