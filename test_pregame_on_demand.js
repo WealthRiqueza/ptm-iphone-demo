@@ -39,6 +39,8 @@ x=fixture();x.matches.push({...x.matches[0],id:"future",played_at_utc:"2026-11-0
 assert.throws(()=>analyze(x),/evidencia futura/);
 x=fixture();x.matches[0].sets[0]=[11,10];
 assert.throws(()=>analyze(x),/Puntos de set/);
+x=fixture();x.matches[0].sets=[[11,8],[11,8],[11,8],[8,11],[8,11]];
+assert.throws(()=>analyze(x),/continuó después/);
 x=fixture();x.provenance.permission="unknown";
 assert.throws(()=>analyze(x),/Procedencia/);
 console.log("PTM PREGAME V1 browser engine: 17 offline assertions PASS (synthetic fixtures; NO predictive validation)");
