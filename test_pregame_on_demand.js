@@ -33,6 +33,8 @@ assert.equal(report.decision,"DESCARTAR");
 assert.equal(report.amount_usd,0);
 let x=fixture();x.provenance.captured_at_utc="2026-11-07T19:00:00Z";
 assert.throws(()=>analyze(x),/Captura posterior/);
+x=fixture();x.provenance.captured_at_utc=x.scheduled_at_utc;
+assert.throws(()=>analyze(x),/en o después/);
 x=fixture();x.matches.push(x.matches[0]);
 assert.throws(()=>analyze(x),/duplicado/);
 x=fixture();x.matches.push({...x.matches[0],id:"future",played_at_utc:"2026-11-07T19:00:00Z"});
