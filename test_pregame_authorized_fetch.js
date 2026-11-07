@@ -4,7 +4,7 @@ const assert=require("node:assert/strict");
 const fs=require("node:fs");
 const vm=require("node:vm");
 const html=fs.readFileSync("index.html","utf8");
-const scripts=[...html.matchAll(/<script(?:\\s[^>]*)?>([\\s\\S]*?)<\\/script>/g)];
+const scripts=[...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)];
 const inline=scripts.filter(m=>m[1].trim()).map(m=>m[1]);
 assert.equal(inline.length,1);
 new Function(inline[0]);
