@@ -1,0 +1,26 @@
+name: PREGAME iPhone offline checks
+on:
+  push:
+    paths:
+      - 'pregame-on-demand.js'
+      - 'test-pregame-on-demand.js'
+      - '.github/workflows/pregame-demo-smoke.yml'
+  pull_request:
+    paths:
+      - 'pregame-on-demand.js'
+      - 'test-pregame-on-demand.js'
+      - '.github/workflows/pregame-demo-smoke.yml'
+jobs:
+  offline-regression:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax check
+        run: node --check pregame-on-demand.js
+      - name: Fail-closed synthetic regression
+        run: node test-pregame-on-demand.js
