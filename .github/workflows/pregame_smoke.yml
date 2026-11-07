@@ -1,0 +1,24 @@
+name: iPhone PREGAME offline smoke
+on:
+  push:
+    paths:
+      - 'index.html'
+      - 'test_pregame_bridge.cjs'
+      - '.github/workflows/pregame_smoke.yml'
+  pull_request:
+    paths:
+      - 'index.html'
+      - 'test_pregame_bridge.cjs'
+      - '.github/workflows/pregame_smoke.yml'
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Parse and simulate iPhone PREGAME report
+        run: node test_pregame_bridge.cjs
