@@ -105,7 +105,7 @@
      quinto_set_h2h:h5.length?pairs(a,b,rate(h5.filter(m=>norm(m.winner)===norm(a)).length,h5.length),rate(h5.filter(m=>norm(m.winner)===norm(b)).length,h5.length)):"SIN VERIFICAR",
      quinto_set_general:pairs(a,b,rate(sa.fifth.wins,sa.fifth.played),rate(sb.fifth.wins,sb.fifth.played)),
      rivales_comunes:commonText,
-     fatiga_mismo_dia:pairs(a,b,String(sa.sameDay)+" partidos previos",String(sb.sameDay)+" partidos previos"),
+     fatiga_mismo_dia:rows.length?pairs(a,b,String(sa.sameDay)+" observados",String(sb.sameDay)+" observados")+" (muestra no exhaustiva)":"SIN VERIFICAR",
      alerta_sorpresa:surprise+" (observaciones NO autenticadas)",
      alerta_contradiccion_h2h:contradiction+" (observaciones NO autenticadas)",
      riesgo_remontada:pairs(a,b,rate(sa.comeback.wins,sa.comeback.played),rate(sb.comeback.wins,sb.comeback.played))+"; riesgo predictivo SIN VERIFICAR",
