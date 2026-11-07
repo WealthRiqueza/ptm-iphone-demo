@@ -24,9 +24,9 @@ class Element {
 const nodes=new Map();
 function get(id){if(!nodes.has(id))nodes.set(id,new Element(id));return nodes.get(id);}
 const document={getElementById:get,createElement(tag){const e=new Element();e.tag=tag;return e;}};
-const fixture={player_a:"A",player_b:"B",scheduled_at_utc:"2026-11-07T18:00:00Z",
+const fixture={player_a:"ALPHA PLAYER",player_b:"BETA PLAYER",scheduled_at_utc:"2026-11-07T18:00:00Z",
  provenance:{source_url:"https://example.org/matches",permission:"user-provided",captured_at_utc:"2026-11-07T17:00:00Z"},
- matches:[{id:"one",player_a:"A",player_b:"B",played_at_utc:"2026-11-06T17:00:00Z",
+ matches:[{id:"one",player_a:"ALPHA PLAYER",player_b:"BETA PLAYER",played_at_utc:"2026-11-06T17:00:00Z",
  sets:[[11,8],[11,9],[11,7]],source_url:"https://example.org/one"}]};
 let calls=0;
 const fetch=async (url,options)=>{
@@ -43,12 +43,12 @@ const context=vm.createContext({document,fetch,URL,AbortController,Date,Intl,Num
 vm.runInContext(fs.readFileSync("pregame-on-demand.js","utf8"),context);
 vm.runInContext(inline[0],context);
 (async()=>{
- get("match").value="A VS B";get("analyze").click();
+ get("match").value="ALPHA PLAYER VS BETA PLAYER";get("analyze").click();
  get("pregame-source-url").value="https://example.org/authorized.json";
  await get("fetch-pregame-source").click();
  assert.equal(calls,1);
  const h2h=get("report-fields").children.find(x=>x.dataset.key==="h2h_historico");
- assert.match(h2h.querySelector("strong").textContent,/A 1 - 0 B/);
+ assert.match(h2h.querySelector("strong").textContent,/ALPHA PLAYER 1 - 0 BETA PLAYER/);
  assert.equal(get("ptm-probability").textContent,"SIN VERIFICAR");
  assert.equal(get("ptm-filter").textContent,"SIN VERIFICAR");
  assert.match(get("pregame-source-status").textContent,/DESCARTAR/);
