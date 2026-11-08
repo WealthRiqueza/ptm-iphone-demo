@@ -214,9 +214,13 @@ document.getElementById('fetch-pregame-source').addEventListener('click',async()
   url=new URL(rawUrl);
   if(url.protocol!=='https:'||url.username||url.password||url.hash)
    throw new Error('Se requiere HTTPS sin credenciales ni fragmentos');
-  if(url.hostname==='localhost'||url.hostname.endsWith('.local')||
-     /^127\./.test(url.hostname)||url.hostname==='[::1]')
-   throw new Error('Dirección local no permitida');
+  // URL() canonicalizes numeric IPv4 (2130706433 -> 127.0.0.1).
+  // For a user-initiated read, require public DNS, never local/private IPs.
+  const host=url.hostname.toLowerCase().replace(/\.$/,'');
+  if(host==='localhost'||host.endsWith('.localhost')||
+     host.endsWith('.local')||host.endsWith('.internal')||
+     /^(?:\d{1,3}\.){3}\d{1,3}$/.test(host)||host.startsWith('['))
+   throw new Error('Se requiere un dominio HTTPS público, no una dirección IP o local');
  }catch(e){clearPregameFields();status.textContent='URL rechazada: '+String(e.message||'inválida')+'. DESCARTAR · $0.';return;}
  const parts=input.value.trim().split(/\s+VS\s+/i).map(s=>s.trim());
  if(parts.length!==2||parts.some(s=>s.length<3)){clearPregameFields();status.textContent='Identifica primero el partido. DESCARTAR · $0.';return;}
