@@ -48,7 +48,7 @@
    if (!Array.isArray(p.matches) || p.matches.length>200) throw Error("Máximo 200 partidos observados");
    // A per-match evidence URL must identify one unique match. Duplicate rows
    // with different IDs would otherwise inflate H2H and form denominators.
-   const ids=new Set(), evidenceUrls=new Set(), rows=[];
+   const ids=new Set(), evidenceUrls=new Set(), matchFingerprints=new Set(), rows=[];
    for (const m of p.matches) {
      if (!m || typeof m!=="object" || typeof m.id!=="string" || !clean(m.id) ||
          typeof m.player_a!=="string" || typeof m.player_b!=="string" ||
@@ -73,6 +73,13 @@
        sets.push([s[0],s[1]]);
      }
      if (Math.max(...wins)!==3 || Math.min(...wins)!==sets.length-3) throw Error("Marcador de partido inconsistente");
+     // An event can be repeated under different IDs/URLs or reversed sides.
+     // Canonical UTC instant, names and set points prevent double counting.
+     const names=[norm(x),norm(y)].sort();
+     const canonicalSets=norm(x)===names[0]?sets:sets.map(score=>score.slice().reverse());
+     const fingerprint=JSON.stringify([names,played,canonicalSets]);
+     if(matchFingerprints.has(fingerprint)) throw Error("Partido duplicado con distinta fuente");
+     matchFingerprints.add(fingerprint);
      if (played>=scheduled) continue;
      rows.push({x,y,played,sets,wins,first:sets[0][0]>sets[0][1]?x:y,
                 winner:wins[0]===3?x:y,source:m.source_url});
