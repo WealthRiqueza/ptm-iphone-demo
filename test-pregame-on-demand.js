@@ -81,6 +81,29 @@ futureCapture.scheduled_at_utc="2099-11-07T18:00:00Z";
 futureCapture.provenance.captured_at_utc="2099-11-07T17:00:00Z";
 assert.throws(() => globalThis.PTMOnDemand.analyze(futureCapture), /Captura futura/);
 
+// The same on-demand matches can produce a raw, market-independent Elo
+// research candidate. It is NEVER an independently validated PTM probability.
+const eloRows=Array.from({length:10},(_,i)=>
+  row("elo-"+(i+1), [[11,8],[11,9],[11,7]],
+      "2026-11-"+String(i+1).padStart(2,"0")+"T17:00:00Z"));
+const eloInput=input(eloRows);
+eloInput.scheduled_at_utc="2026-11-12T18:00:00Z";
+eloInput.provenance.captured_at_utc="2026-11-11T17:00:00Z";
+const eloReport=globalThis.PTMOnDemand.analyze(eloInput);
+assert.equal(eloReport.research_elo.status,"BASELINE_NO_CALIBRADO");
+assert.ok(Math.abs(eloReport.research_elo.raw_probability_a-0.7380700691604779)<1e-12);
+assert.deepEqual(eloReport.research_elo.sample_counts,{A:10,B:10});
+assert.equal(eloReport.research_elo.probability_verified,false);
+assert.equal(eloReport.model_probability_verified,false);
+assert.equal(eloReport.decision,"DESCARTAR");
+assert.equal(eloReport.amount_usd,0);
+const reversedElo=globalThis.PTMOnDemand.analyze({...eloInput,matches:eloRows.slice().reverse()});
+assert.ok(Math.abs(reversedElo.research_elo.raw_probability_a-
+                   eloReport.research_elo.raw_probability_a)<1e-12);
+const insufficientElo=globalThis.PTMOnDemand.analyze({...eloInput,matches:eloRows.slice(0,9)});
+assert.equal(insufficientElo.research_elo.raw_probability_a,null);
+assert.equal(insufficientElo.research_elo.status,"SIN_VERIFICAR");
+
 // The on-demand ChatGPT handoff must remain available without a paid dataset.
 const html = require("node:fs").readFileSync(require("node:path").join(__dirname, "index.html"), "utf8");
 assert.match(html, /COPIAR SOLICITUD PREGAME \+ JSON PARA IPHONE/);
