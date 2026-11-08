@@ -46,13 +46,17 @@
    const captured=iso(prov.captured_at_utc);
    if (captured>=scheduled) throw Error("Captura en o después del inicio: no es PREGAME");
    if (!Array.isArray(p.matches) || p.matches.length>200) throw Error("Máximo 200 partidos observados");
-   const ids=new Set(), rows=[];
+   // A per-match evidence URL must identify one unique match. Duplicate rows
+   // with different IDs would otherwise inflate H2H and form denominators.
+   const ids=new Set(), evidenceUrls=new Set(), rows=[];
    for (const m of p.matches) {
      if (!m || typeof m!=="object" || typeof m.id!=="string" || !clean(m.id) ||
          typeof m.player_a!=="string" || typeof m.player_b!=="string" ||
          ids.has(clean(m.id)) ||
          !https(m.source_url)) throw Error("ID duplicado o URL de partido inválida");
+     if(evidenceUrls.has(m.source_url)) throw Error("URL de partido duplicada");
      ids.add(clean(m.id));
+     evidenceUrls.add(m.source_url);
      const x=clean(m.player_a), y=clean(m.player_b);
      if (!x || !y || norm(x)===norm(y)) throw Error("Jugadores de resultado inválidos");
      const played=iso(m.played_at_utc);
