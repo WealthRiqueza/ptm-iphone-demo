@@ -23,6 +23,26 @@ async function smoke(engine) {
     assert.equal(await page.locator("#ptm-probability").textContent(),"SIN VERIFICAR");
     assert.equal(await page.locator("#ptm-filter").textContent(),"SIN VERIFICAR");
     assert.equal(await page.locator("#ptm-market").textContent(),"SIN VERIFICAR");
+    // Hosted-page raw-result import: synthetic evidence exercises deployed JS over real HTTPS.
+    // This is NOT a licensed Setka feed or a calibrated probability.
+    const fixture = {
+      player_a:"DUKHOVENKO OLEKSANDR",player_b:"REZNYCHENKO ROMAN",
+      scheduled_at_utc:"2026-11-07T18:00:00Z",
+      provenance:{source_url:"https://ptm-fixture.example/feed",permission:"user-provided",
+                  captured_at_utc:"2026-11-07T17:00:00Z"},
+      matches:[{id:"smoke-1",player_a:"DUKHOVENKO OLEKSANDR",
+                player_b:"REZNYCHENKO ROMAN",played_at_utc:"2026-11-06T17:00:00Z",
+                sets:[[11,8],[11,9],[11,7]],
+                source_url:"https://ptm-fixture.example/match/smoke-1"}]
+    };
+    await page.locator("#raw-results-on-demand summary").click();
+    await page.locator("#pregame-source-json").fill(JSON.stringify(fixture));
+    await page.locator("#generate-pregame").click();
+    assert.match(await page.locator("#pregame-source-status").textContent(),/Calculados 1/);
+    assert.match(await page.locator('[data-key="h2h_historico"] strong').textContent(),/1 - 0/);
+    assert.equal(await page.locator("#ptm-probability").textContent(),"SIN VERIFICAR");
+    assert.equal(await page.locator("#ptm-filter").textContent(),"SIN VERIFICAR");
+    assert.match(await page.locator("#results").textContent(),/DESCARTAR\\s*·\\s*\\$0/);
     assert.deepEqual(errors,[],"Errores de JavaScript en la página desplegada");
     console.log(engine.name()+": HTTPS GitHub Pages + identificar partido + 14 campos PASS");
   } finally {
