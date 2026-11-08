@@ -42,7 +42,7 @@ async function smoke(engine) {
     assert.match(await page.locator('[data-key="h2h_historico"] strong').textContent(),/1 - 0/);
     assert.equal(await page.locator("#ptm-probability").textContent(),"SIN VERIFICAR");
     assert.equal(await page.locator("#ptm-filter").textContent(),"SIN VERIFICAR");
-    assert.match(await page.locator("#results").textContent(),/DESCARTAR\\s*·\\s*\\$0/);
+    assert.match(await page.locator("#results").textContent(),/DESCARTAR\s*·\s*\$0/);
     assert.deepEqual(errors,[],"Errores de JavaScript en la página desplegada");
     console.log(engine.name()+": HTTPS GitHub Pages + identificar partido + 14 campos PASS");
   } finally {
