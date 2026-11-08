@@ -45,6 +45,16 @@ x=fixture();x.matches[0].sets=[[11,8],[11,8],[11,8],[8,11],[8,11]];
 assert.throws(()=>analyze(x),/continuó después/);
 x=fixture();x.provenance.permission="unknown";
 assert.throws(()=>analyze(x),/Procedencia/);
+// Identity is not inferred from array coercion or accent folding.
+x=fixture();x.player_a=["A"];
+assert.throws(()=>analyze(x),/Identidad de jugador/);
+x=fixture();x.matches[0].player_a=["B"];
+assert.throws(()=>analyze(x),/ID duplicado o URL/);
+x=fixture();x.matches[0].id=123;
+assert.throws(()=>analyze(x),/ID duplicado o URL/);
+x=fixture();x.player_a="Á";x.player_b="A";x.matches=[];
+assert.equal(analyze(x).player_a,"Á");
+
 console.log("PTM PREGAME V1 browser engine: 17 offline assertions PASS (synthetic fixtures; NO predictive validation)");
 
 
