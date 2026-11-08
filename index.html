@@ -78,6 +78,9 @@ const REPORT_FIELDS=[
  ['Riesgo de remontada','riesgo_remontada'],['Cuotas externas','cuotas_externas']
 ];
 const reportFields=document.getElementById('report-fields');
+// Editing the matchup invalidates all previously displayed evidence immediately.
+// A revision also prevents an in-flight source request from restoring stale data.
+let matchRevision=0;
 for(const [label,key] of REPORT_FIELDS){
  const row=document.createElement('div');row.className='stat';row.dataset.key=key;
  const name=document.createElement('span');name.textContent=label;
@@ -96,6 +99,19 @@ function clearPregameFields(){
   document.getElementById('ptm-kalshi').textContent='SIN VERIFICAR';
   document.getElementById('ptm-market').textContent='SIN VERIFICAR';
 }
+input.addEventListener('input',()=>{
+ matchRevision++;
+ clearPregameFields();
+ results.classList.toggle('hidden',true);
+ const jsonStatus=document.getElementById('pregame-json-status');
+ jsonStatus.dataset.loaded='false';
+ jsonStatus.textContent='Partido editado: informe anterior descartado. Identifica el nuevo partido.';
+ document.getElementById('pregame-source-status').textContent='Partido editado: resultados anteriores descartados. DESCARTAR · $0.';
+ marketStatus.textContent='Partido editado: mercado anterior descartado.';
+ marketList.replaceChildren();
+ document.getElementById('market-us-status').textContent='Partido editado: consulta US anterior descartada.';
+ document.getElementById('market-us-list').replaceChildren();
+});
 // Diagnostic bridge only: read a locally supplied, explicitly unverified
 // Python PREGAME JSON result. Never infer authentication or approve the filter.
 document.getElementById('load-pregame-json').addEventListener('click',()=>{
@@ -224,6 +240,7 @@ document.getElementById('fetch-pregame-source').addEventListener('click',async()
  }catch(e){clearPregameFields();status.textContent='URL rechazada: '+String(e.message||'inválida')+'. DESCARTAR · $0.';return;}
  const parts=input.value.trim().split(/\s+VS\s+/i).map(s=>s.trim());
  if(parts.length!==2||parts.some(s=>s.length<3)){clearPregameFields();status.textContent='Identifica primero el partido. DESCARTAR · $0.';return;}
+ const revision=matchRevision, requestedMatch=input.value.trim();
  button.disabled=true;clearPregameFields();status.textContent='Consultando una sola vez el endpoint autorizado…';
  const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),10000);
  try {
@@ -234,6 +251,8 @@ document.getElementById('fetch-pregame-source').addEventListener('click',async()
   if(size>150000)throw new Error('Respuesta mayor de 150 KB');
   const raw=await response.text();
   if(raw.length>150000)throw new Error('JSON demasiado grande');
+  if(revision!==matchRevision||input.value.trim()!==requestedMatch)
+   throw new Error('El partido cambió durante la consulta');
   const payload=JSON.parse(raw);
   if(!payload||!payload.provenance||!payload.provenance.permission||
      !['authorized','user-provided'].includes(payload.provenance.permission))
