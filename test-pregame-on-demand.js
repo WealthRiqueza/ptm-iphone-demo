@@ -72,9 +72,14 @@ for (const bad of ["2026-02-30T12:00:00Z", "2026-04-31T12:00:00Z",
   assert.throws(() => globalThis.PTMOnDemand.analyze(badPlayed), /Fecha/);
 }
 const leap=input([]);
-leap.scheduled_at_utc="2028-03-01T18:00:00Z";
-leap.provenance.captured_at_utc="2028-02-29T18:00:00Z";
+leap.scheduled_at_utc="2024-03-01T18:00:00Z";
+leap.provenance.captured_at_utc="2024-02-29T18:00:00Z";
 assert.equal(globalThis.PTMOnDemand.analyze(leap).decision, "DESCARTAR");
+// Future snapshots are not yet observable, even if scheduled kickoff is later.
+const futureCapture=input([]);
+futureCapture.scheduled_at_utc="2099-11-07T18:00:00Z";
+futureCapture.provenance.captured_at_utc="2099-11-07T17:00:00Z";
+assert.throws(() => globalThis.PTMOnDemand.analyze(futureCapture), /Captura futura/);
 
 // The on-demand ChatGPT handoff must remain available without a paid dataset.
 const html = require("node:fs").readFileSync(require("node:path").join(__dirname, "index.html"), "utf8");
