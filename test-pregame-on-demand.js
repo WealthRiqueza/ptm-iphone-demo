@@ -32,6 +32,19 @@ assert.throws(() => globalThis.PTMOnDemand.analyze(input([
   row("future", [[11,8],[11,8],[11,8]], "2026-11-07T17:30:00Z")
 ])), /evidencia futura/);
 assert.equal(globalThis.PTMOnDemand.analyze(input([])).observed_rows, 0);
+for (const url of [
+  "https://", "https://user:secret@example.org/m",
+  "https://example.org/m#fragment", "https://exa mple.org/m",
+  "https://example.org@another.example/m"
+]) {
+  const p = input([row("bad-source", [[11,8],[11,8],[11,8]])]);
+  p.matches[0].source_url = url;
+  assert.throws(() => globalThis.PTMOnDemand.analyze(p), /URL de partido inválida/);
+  p.matches[0].source_url = "https://example.org/m";
+  p.provenance.source_url = url;
+  assert.throws(() => globalThis.PTMOnDemand.analyze(p), /Procedencia HTTPS/);
+}
+
 // The on-demand ChatGPT handoff must remain available without a paid dataset.
 const html = require("node:fs").readFileSync(require("node:path").join(__dirname, "index.html"), "utf8");
 assert.match(html, /COPIAR SOLICITUD PREGAME \+ JSON PARA IPHONE/);
