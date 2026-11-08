@@ -33,6 +33,30 @@
  const rate = (w,n) => n ? w+"/"+n+" ("+Math.round(100*w/n)+"%)" : "SIN VERIFICAR";
  const pairs = (a,b,ra,rb) => a+": "+ra+" | "+b+": "+rb;
  const miamiDate = ms => {const p=new Intl.DateTimeFormat("en-US",{timeZone:"America/New_York",year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(new Date(ms));const get=k=>p.find(v=>v.type===k).value;return get("year")+"-"+get("month")+"-"+get("day");};
+ function researchElo(rows, a, b) {
+   // Research-only Elo K=24; no market odds, no source authentication or calibration.
+   const aKey=norm(a), bKey=norm(b);
+   const counts=Object.create(null), ratings=Object.create(null);
+   counts[aKey]=0;counts[bKey]=0;
+   const ordered=rows.slice().sort((u,v)=>u.played-v.played ||
+     (u.id<v.id?-1:u.id>v.id?1:0));
+   for(const m of ordered) {
+     const x=norm(m.x), y=norm(m.y), winner=norm(m.winner);
+     if(x===aKey||y===aKey)counts[aKey]++;
+     if(x===bKey||y===bKey)counts[bKey]++;
+     const ra=Object.prototype.hasOwnProperty.call(ratings,x)?ratings[x]:1500;
+     const rb=Object.prototype.hasOwnProperty.call(ratings,y)?ratings[y]:1500;
+     const p=1/(1+Math.pow(10,(rb-ra)/400));
+     const delta=24*((winner===x?1:0)-p);
+     ratings[x]=ra+delta;ratings[y]=rb-delta;
+   }
+   const enough=counts[aKey]>=10&&counts[bKey]>=10;
+   const probability=enough?1/(1+Math.pow(10,(ratings[bKey]-ratings[aKey])/400)):null;
+   return {status:enough?"BASELINE_NO_CALIBRADO":"SIN_VERIFICAR",
+     raw_probability_a:probability,
+     sample_counts:{[a]:counts[aKey],[b]:counts[bKey]},
+     source_data_verified:false,probability_verified:false};
+ }
  function analyze(p) {
    if (!p || typeof p !== "object" || Array.isArray(p)) throw Error("Objeto JSON requerido");
    if (typeof p.player_a !== "string" || typeof p.player_b !== "string")
@@ -83,7 +107,7 @@
      if(matchFingerprints.has(fingerprint)) throw Error("Partido duplicado con distinta fuente");
      matchFingerprints.add(fingerprint);
      if (played>=scheduled) continue;
-     rows.push({x,y,played,sets,wins,first:sets[0][0]>sets[0][1]?x:y,
+     rows.push({id:clean(m.id),x,y,played,sets,wins,first:sets[0][0]>sets[0][1]?x:y,
                 winner:wins[0]===3?x:y,source:m.source_url});
    }
    rows.sort((u,v)=>v.played-u.played);
@@ -108,6 +132,7 @@
        sameDay:records.filter(r=>r.day===miamiDate(scheduled)).length,streak,opponents};
    }
    const sa=summary(a), sb=summary(b);
+   const rawElo=researchElo(rows,a,b);
    const h2h=rows.filter(m=>[norm(m.x),norm(m.y)].sort().join("|")===[norm(a),norm(b)].sort().join("|"));
    const hA=h2h.filter(m=>norm(m.winner)===norm(a)).length, hB=h2h.length-hA;
    const h5=h2h.filter(m=>m.sets.length===5);
@@ -151,6 +176,7 @@
    };
    return {schema_version:"ptm-pregame-v1",player_a:a,player_b:b,scheduled_at_utc:p.scheduled_at_utc,
      statistics:stats,observed_rows:rows.length,cutoff_enforced:true,upstream_verified:false,
+     research_elo:rawElo,
      model_probability_verified:false,decision:"DESCARTAR",amount_usd:0,provenance:prov};
  }
  root.PTMOnDemand=Object.freeze({analyze});
