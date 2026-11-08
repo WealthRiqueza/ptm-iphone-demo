@@ -45,6 +45,24 @@ for (const url of [
   assert.throws(() => globalThis.PTMOnDemand.analyze(p), /Procedencia HTTPS/);
 }
 
+// Calendar dates must be real, not normalized by browser Date.parse.
+// Invalid capture/start/match timestamps must fail closed across time zones.
+for (const bad of ["2026-02-30T12:00:00Z", "2026-04-31T12:00:00Z",
+                  "2026-11-07T25:00:00Z", "2026-11-07T12:60:00Z"]) {
+  const badStart=input([]);
+  badStart.scheduled_at_utc=bad;
+  assert.throws(() => globalThis.PTMOnDemand.analyze(badStart), /Fecha/);
+  const badCapture=input([]);
+  badCapture.provenance.captured_at_utc=bad;
+  assert.throws(() => globalThis.PTMOnDemand.analyze(badCapture), /Fecha/);
+  const badPlayed=input([row("date", [[11,8],[11,8],[11,8]], bad)]);
+  assert.throws(() => globalThis.PTMOnDemand.analyze(badPlayed), /Fecha/);
+}
+const leap=input([]);
+leap.scheduled_at_utc="2028-03-01T18:00:00Z";
+leap.provenance.captured_at_utc="2028-02-29T18:00:00Z";
+assert.equal(globalThis.PTMOnDemand.analyze(leap).decision, "DESCARTAR");
+
 // The on-demand ChatGPT handoff must remain available without a paid dataset.
 const html = require("node:fs").readFileSync(require("node:path").join(__dirname, "index.html"), "utf8");
 assert.match(html, /COPIAR SOLICITUD PREGAME \+ JSON PARA IPHONE/);
