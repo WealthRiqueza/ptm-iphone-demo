@@ -1,0 +1,28 @@
+name: PREGAME deployed iPhone-like browser smoke
+on:
+  push:
+    paths:
+      - 'test_pregame_deployed_smoke.cjs'
+      - '.github/workflows/pregame_deployed_smoke.yml'
+  workflow_run:
+    workflows: ['pages build and deployment']
+    types: [completed]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  deployed-smoke:
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Playwright browser engines
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium webkit
+      - name: Test actual HTTPS Pages deployment (no mock data)
+        run: node test_pregame_deployed_smoke.cjs
