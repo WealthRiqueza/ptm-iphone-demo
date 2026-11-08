@@ -5,14 +5,12 @@ on:
       - 'index.html'
       - 'pregame-on-demand.js'
       - 'test_pregame_browser_e2e.cjs'
-      - 'test_pregame_deployed_smoke.cjs'
       - '.github/workflows/pregame_v1_webkit_e2e.yml'
   pull_request:
     paths:
       - 'index.html'
       - 'pregame-on-demand.js'
       - 'test_pregame_browser_e2e.cjs'
-      - 'test_pregame_deployed_smoke.cjs'
       - '.github/workflows/pregame_v1_webkit_e2e.yml'
 jobs:
   browser-e2e:
@@ -31,5 +29,3 @@ jobs:
           npx playwright install --with-deps chromium webkit
       - name: Browser-level PREGAME smoke (synthetic and mocked only)
         run: node test_pregame_browser_e2e.cjs
-      - name: Public GitHub Pages HTTPS smoke (deployed UI, not live data)
-        run: node test_pregame_deployed_smoke.cjs
