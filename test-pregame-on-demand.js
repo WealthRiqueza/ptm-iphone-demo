@@ -85,10 +85,8 @@ assert.throws(() => globalThis.PTMOnDemand.analyze(futureCapture), /Captura futu
 // research candidate. It is NEVER an independently validated PTM probability.
 const eloRows=Array.from({length:10},(_,i)=>
   row("elo-"+(i+1), [[11,8],[11,9],[11,7]],
-      "2026-11-"+String(i+1).padStart(2,"0")+"T17:00:00Z"));
+      "2026-10-"+String(i+20).padStart(2,"0")+"T17:00:00Z"));
 const eloInput=input(eloRows);
-eloInput.scheduled_at_utc="2026-11-12T18:00:00Z";
-eloInput.provenance.captured_at_utc="2026-11-11T17:00:00Z";
 const eloReport=globalThis.PTMOnDemand.analyze(eloInput);
 assert.equal(eloReport.research_elo.status,"BASELINE_NO_CALIBRADO");
 assert.ok(Math.abs(eloReport.research_elo.raw_probability_a-0.7380700691604779)<1e-12);
