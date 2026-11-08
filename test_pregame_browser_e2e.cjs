@@ -59,6 +59,15 @@ async function testBrowser(type) {
   assert.match(await page.locator("#pregame-source-status").textContent(),/No se pudo calcular/);
   assert.equal(await page.locator('[data-key="h2h_historico"] strong').textContent(),"SIN VERIFICAR");
 
+  // A source snapshot dated in the future must also fail closed in the UI.
+  const future=source();
+  future.scheduled_at_utc="2099-11-07T18:00:00Z";
+  future.provenance.captured_at_utc="2099-11-07T17:00:00Z";
+  await page.locator("#pregame-source-json").fill(JSON.stringify(future));
+  await page.locator("#generate-pregame").click();
+  assert.match(await page.locator("#pregame-source-status").textContent(),/No se pudo calcular/);
+  assert.equal(await page.locator('[data-key="h2h_historico"] strong').textContent(),"SIN VERIFICAR");
+
   // ChatGPT display-only report works without a scheduled kickoff.
   await page.locator("#report-json-diagnostic summary").click();
   await page.locator("#pregame-json").fill(JSON.stringify(manual()));
