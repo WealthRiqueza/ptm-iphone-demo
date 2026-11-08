@@ -7,8 +7,18 @@
  // Preserve accents for strict player identity: transliteration is not proof of a match.
  const norm = x => clean(x).toLowerCase();
  const iso = x => {
-   if (typeof x !== "string" || !/(Z|[+-]\d\d:\d\d)$/.test(x)) throw Error("Fecha con zona UTC requerida");
-   const t = Date.parse(x);
+   if (typeof x !== "string") throw Error("Fecha con zona UTC requerida");
+   // Date.parse can normalize impossible calendar dates in Safari and Chromium.
+   // Reject them before evaluating PREGAME point-in-time cutoffs.
+   const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2})(?:\.\d{1,6})?)?(Z|[+-]\d{2}:\d{2})$/.exec(x);
+   if (!m) throw Error("Fecha con zona UTC requerida");
+   const year=Number(m[1]), month=Number(m[2]), day=Number(m[3]);
+   const hour=Number(m[4]), minute=Number(m[5]), second=Number(m[6]||0);
+   const leap=year%4===0&&(year%100!==0||year%400===0);
+   const days=[31,leap?29:28,31,30,31,30,31,31,30,31,30,31];
+   if (month<1||month>12||day<1||day>days[month-1]||
+       hour>23||minute>59||second>59) throw Error("Fecha inválida");
+   const t=Date.parse(x);
    if (!Number.isFinite(t)) throw Error("Fecha inválida");
    return t;
  };
