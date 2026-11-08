@@ -26,6 +26,7 @@ const manual = () => ({
  schema_version:"ptm-pregame-v1",player_a:"ALPHA",player_b:"BETA",
  scheduled_at_utc:"SIN VERIFICAR",
  statistics:Object.fromEntries(fields.map(k=>[k,k==="h2h_historico"?"ALPHA 1 - 1 BETA (NO AUTENTICADO)":"SIN VERIFICAR"])),
+ market_observations:{polymarket:"Honemann 0.62 · 2026-11-07T17:00:00Z · https://example.org/quote",kalshi:"SIN VERIFICAR"},
  observed_rows:0,cutoff_enforced:false,upstream_verified:false,
  model_probability_verified:false,decision:"DESCARTAR",amount_usd:0
 });
@@ -64,6 +65,14 @@ async function testBrowser(type) {
   await page.locator("#load-pregame-json").click();
   assert.match(await page.locator("#pregame-json-status").textContent(),/Informe manual de ChatGPT cargado/);
   assert.match(await page.locator('[data-key="h2h_historico"] strong').textContent(),/NO AUTENTICADO/);
+  assert.match(await page.locator("#ptm-polymarket").textContent(),/0\.62.*NO AUTENTICADO/);
+  assert.equal(await page.locator("#ptm-kalshi").textContent(),"SIN VERIFICAR");
+  assert.equal(await page.locator("#ptm-market").textContent(),"SIN VERIFICAR");
+  const unsafeMarket=manual();unsafeMarket.market_observations.polymarket={price:0.99};
+  await page.locator("#pregame-json").fill(JSON.stringify(unsafeMarket));
+  await page.locator("#load-pregame-json").click();
+  assert.match(await page.locator("#pregame-json-status").textContent(),/No se cargó el informe/);
+  assert.equal(await page.locator("#ptm-polymarket").textContent(),"SIN VERIFICAR");
   const unsafe=manual();unsafe.amount_usd=100;
   await page.locator("#pregame-json").fill(JSON.stringify(unsafe));
   await page.locator("#load-pregame-json").click();
