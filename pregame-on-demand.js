@@ -44,6 +44,9 @@
        !["authorized","user-provided"].includes(prov.permission))
      throw Error("Procedencia HTTPS y permiso declarado requeridos");
    const captured=iso(prov.captured_at_utc);
+   // Reject a declared capture that has not happened yet. A five-minute clock
+   // tolerance is for mobile device skew, not authentication of the source.
+   if (captured>Date.now()+5*60*1000) throw Error("Captura futura: evidencia no disponible");
    if (captured>=scheduled) throw Error("Captura en o después del inicio: no es PREGAME");
    if (!Array.isArray(p.matches) || p.matches.length>200) throw Error("Máximo 200 partidos observados");
    // A per-match evidence URL must identify one unique match. Duplicate rows
