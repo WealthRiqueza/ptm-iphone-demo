@@ -28,7 +28,7 @@ const fixture={player_a:"ALPHA PLAYER",player_b:"BETA PLAYER",scheduled_at_utc:"
  provenance:{source_url:"https://example.org/matches",permission:"user-provided",captured_at_utc:"2026-11-07T17:00:00Z"},
  matches:[{id:"one",player_a:"ALPHA PLAYER",player_b:"BETA PLAYER",played_at_utc:"2026-11-06T17:00:00Z",
  sets:[[11,8],[11,9],[11,7]],source_url:"https://example.org/one"}]};
-let calls=0;
+let calls=0,delayResponse=false,releaseResponse;
 const fetch=async (url,options)=>{
  calls++;
  assert.equal(url,"https://example.org/authorized.json");
@@ -36,7 +36,9 @@ const fetch=async (url,options)=>{
  assert.equal(options.redirect,"error");
  assert.equal(options.cache,"no-store");
  assert.equal(options.method,"GET");
- return {ok:true,headers:{get:()=>String(JSON.stringify(fixture).length)},text:async()=>JSON.stringify(fixture)};
+ const response={ok:true,headers:{get:()=>String(JSON.stringify(fixture).length)},text:async()=>JSON.stringify(fixture)};
+ if(delayResponse)return new Promise(resolve=>{releaseResponse=()=>resolve(response);});
+ return response;
 };
 const context=vm.createContext({document,fetch,URL,AbortController,Date,Intl,Number,JSON,
  navigator:{clipboard:{writeText:async()=>{}}},setTimeout,clearTimeout,console});
@@ -74,5 +76,30 @@ vm.runInContext(inline[0],context);
    assert.match(get("pregame-source-status").textContent,/URL rechazada/);
  }
 
+ // A user editing the matchup must immediately clear previously loaded data.
+ get("pregame-source-url").value="https://example.org/authorized.json";
+ await get("fetch-pregame-source").click();
+ assert.equal(calls,2);
+ assert.match(h2h.querySelector("strong").textContent,/ALPHA PLAYER 1 - 0 BETA PLAYER/);
+ get("match").value="GAMMA PLAYER VS DELTA PLAYER";
+ get("match").listeners.input();
+ assert.equal(h2h.querySelector("strong").textContent,"SIN VERIFICAR");
+ assert.equal(get("pregame-json-status").dataset.loaded,"false");
+ assert.match(get("pregame-source-status").textContent,/DESCARTAR/);
+
+ // A slow response from a previous matchup must never restore stale H2H.
+ get("match").value="ALPHA PLAYER VS BETA PLAYER";
+ get("match").listeners.input();
+ get("analyze").click();
+ delayResponse=true;
+ const pending=get("fetch-pregame-source").click();
+ assert.equal(calls,3);
+ get("match").value="GAMMA PLAYER VS DELTA PLAYER";
+ get("match").listeners.input();
+ releaseResponse();
+ await pending;
+ assert.equal(h2h.querySelector("strong").textContent,"SIN VERIFICAR");
+ assert.match(get("pregame-source-status").textContent,/partido cambió/);
+ assert.equal(get("ptm-probability").textContent,"SIN VERIFICAR");
  console.log("Authorized HTTPS on-demand fetch UI smoke PASS (synthetic fixture; NOT Safari/network E2E)");
 })().catch(e=>{console.error(e);process.exitCode=1;});
