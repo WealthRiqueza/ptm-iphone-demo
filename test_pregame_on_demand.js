@@ -35,6 +35,10 @@ let x=fixture();x.provenance.captured_at_utc="2026-11-07T19:00:00Z";
 assert.throws(()=>analyze(x),/Captura en o después/);
 x=fixture();x.provenance.captured_at_utc=x.scheduled_at_utc;
 assert.throws(()=>analyze(x),/en o después/);
+// Future-dated source snapshots cannot be treated as already captured.
+x=fixture();x.scheduled_at_utc="2099-11-07T18:00:00Z";
+x.provenance.captured_at_utc="2099-11-07T17:00:00Z";
+assert.throws(()=>analyze(x),/Captura futura/);
 x=fixture();x.matches.push(x.matches[0]);
 assert.throws(()=>analyze(x),/duplicado/);
 // Distinct IDs must not double-count the same source match URL.
