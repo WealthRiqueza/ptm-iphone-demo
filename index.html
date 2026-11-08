@@ -124,6 +124,17 @@ document.getElementById('load-pregame-json').addEventListener('click',()=>{
    if(typeof v!=='string'||v.length>4000)throw new Error('Campo inválido: '+key);
    values[key]=v||'SIN VERIFICAR';
   }
+  // Optional market notes from the manual ChatGPT report are display-only.
+  // They are never treated as executable quotes or verified market mapping.
+  const markets=p.market_observations;
+  if(markets!==undefined && (!markets||typeof markets!=='object'||Array.isArray(markets)))
+   throw new Error('Observaciones de mercado inválidas');
+  const marketNotes={};
+  for(const key of ['polymarket','kalshi']){
+   const note=markets&&markets[key]!==undefined?markets[key]:'SIN VERIFICAR';
+   if(typeof note!=='string'||note.length>1000)throw new Error('Mercado inválido: '+key);
+   marketNotes[key]=note.trim()||'SIN VERIFICAR';
+  }
   for(const row of reportFields.querySelectorAll('[data-key]')){
    const value=row.querySelector('strong');value.textContent=values[row.dataset.key];
    value.className='unknown';
@@ -132,8 +143,8 @@ document.getElementById('load-pregame-json').addEventListener('click',()=>{
   document.getElementById('ptm-scheduled').textContent='SIN VERIFICAR';
   document.getElementById('ptm-provenance').textContent='Procedencia de resultados: SIN VERIFICAR.';
   document.getElementById('ptm-filter').textContent='SIN VERIFICAR';
-  document.getElementById('ptm-polymarket').textContent='SIN VERIFICAR';
-  document.getElementById('ptm-kalshi').textContent='SIN VERIFICAR';
+  document.getElementById('ptm-polymarket').textContent=marketNotes.polymarket==='SIN VERIFICAR'?'SIN VERIFICAR':marketNotes.polymarket+' · NO AUTENTICADO';
+  document.getElementById('ptm-kalshi').textContent=marketNotes.kalshi==='SIN VERIFICAR'?'SIN VERIFICAR':marketNotes.kalshi+' · NO AUTENTICADO';
   document.getElementById('ptm-market').textContent='SIN VERIFICAR';
   const scheduled=typeof p.scheduled_at_utc==='string'?new Date(p.scheduled_at_utc):null;
   document.getElementById('ptm-scheduled').textContent=
@@ -251,8 +262,8 @@ document.getElementById('pregame-source-file').addEventListener('change',async(e
 document.getElementById('copy-request').addEventListener('click',async()=>{
  const parts=input.value.trim().split(/\s+VS\s+/i).map(s=>s.trim());
  if(parts.length!==2||parts.some(s=>s.length<3)){document.getElementById('copy-status').textContent='Primero identifica un partido.';return;}
- const template={schema_version:'ptm-pregame-v1',player_a:parts[0],player_b:parts[1],scheduled_at_utc:'SIN VERIFICAR',statistics:Object.fromEntries(REPORT_FIELDS.map(([,key])=>[key,'SIN VERIFICAR'])),observed_rows:0,cutoff_enforced:false,upstream_verified:false,model_probability_verified:false,decision:'DESCARTAR',amount_usd:0};
- const request='PREGAME PTM 3.3 para '+parts[0]+' VS '+parts[1]+'. Consulta puntualmente fuentes públicas permitidas, sin scraping masivo ni base histórica permanente. Entrega análisis legible con hora de Miami, H2H total/reciente con fechas y sets, forma últimos 10/5, conversión primer set, remontadas, quinto set H2H/general, rivales comunes, fatiga, alertas sorpresa/contradicción, cuotas, Polymarket y Kalshi separados con hora, probabilidad independiente solo con evidencia y filtro >=70%. No inventes datos: SIN VERIFICAR donde falten; sin evidencia, DESCARTAR y $0. Además entrega un bloque JSON sin markdown para pegar en la pantalla iPhone, con EXACTAMENTE el siguiente esquema y las 14 claves. Sustituye solo valores respaldados por fuentes y señala su procedencia. Nunca pongas cutoff_enforced=true a menos que hayas comprobado que TODOS los resultados usados son anteriores a la hora programada UTC, y nunca pongas upstream_verified ni model_probability_verified en true. Si no conoces la hora UTC, conserva SIN VERIFICAR; el iPhone podrá mostrar el informe manual con 14 indicadores pero mantendrá el filtro SIN VERIFICAR y $0. Para un informe manual sin filas de resultados adjuntas, conserva observed_rows=0 y cutoff_enforced=false; NUNCA afirmes que el corte histórico fue validado. No incluyas precios o probabilidad como verificados en el JSON. Esquema: '+JSON.stringify(template);
+ const template={schema_version:'ptm-pregame-v1',player_a:parts[0],player_b:parts[1],scheduled_at_utc:'SIN VERIFICAR',statistics:Object.fromEntries(REPORT_FIELDS.map(([,key])=>[key,'SIN VERIFICAR'])),market_observations:{polymarket:'SIN VERIFICAR',kalshi:'SIN VERIFICAR'},observed_rows:0,cutoff_enforced:false,upstream_verified:false,model_probability_verified:false,decision:'DESCARTAR',amount_usd:0};
+ const request='PREGAME PTM 3.3 para '+parts[0]+' VS '+parts[1]+'. Consulta puntualmente fuentes públicas permitidas, sin scraping masivo ni base histórica permanente. Entrega análisis legible con hora de Miami, H2H total/reciente con fechas y sets, forma últimos 10/5, conversión primer set, remontadas, quinto set H2H/general, rivales comunes, fatiga, alertas sorpresa/contradicción, cuotas, Polymarket y Kalshi separados con hora, probabilidad independiente solo con evidencia y filtro >=70%. No inventes datos: SIN VERIFICAR donde falten; sin evidencia, DESCARTAR y $0. Además entrega un bloque JSON sin markdown para pegar en la pantalla iPhone, con EXACTAMENTE el siguiente esquema y las 14 claves. Sustituye solo valores respaldados por fuentes y señala su procedencia. Nunca pongas cutoff_enforced=true a menos que hayas comprobado que TODOS los resultados usados son anteriores a la hora programada UTC, y nunca pongas upstream_verified ni model_probability_verified en true. Si no conoces la hora UTC, conserva SIN VERIFICAR; el iPhone podrá mostrar el informe manual con 14 indicadores pero mantendrá el filtro SIN VERIFICAR y $0. Para un informe manual sin filas de resultados adjuntas, conserva observed_rows=0 y cutoff_enforced=false; NUNCA afirmes que el corte histórico fue validado. Para cada mercado usa market_observations.polymarket y market_observations.kalshi por separado: solo una nota descriptiva con fuente, hora de captura y lado/resultado cuando exista; de lo contrario SIN VERIFICAR. Esas notas serán mostradas como NO AUTENTICADO, nunca como precio ejecutable ni edge. No incluyas precios o probabilidad como verificados en el JSON. Esquema: '+JSON.stringify(template);
  try{await navigator.clipboard.writeText(request);document.getElementById('copy-status').textContent='Solicitud y formato JSON copiados. Pégalos en ChatGPT; después pega el JSON de respuesta en esta pantalla.';}
  catch(e){document.getElementById('copy-status').textContent='El navegador bloqueó copiar. Selecciona y copia el texto manualmente.';}
 });
