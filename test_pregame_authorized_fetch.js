@@ -56,5 +56,23 @@ vm.runInContext(inline[0],context);
  await get("fetch-pregame-source").click();
  assert.equal(calls,1);
  assert.equal(h2h.querySelector("strong").textContent,"SIN VERIFICAR");
+ // The browser must never fetch a private address or an IP-literal endpoint.
+ // Numeric IPv4 and trailing-dot local names must not bypass the guard.
+ for(const blocked of [
+   "https://127.0.0.1/observations.json",
+   "https://2130706433/observations.json",
+   "https://10.0.0.2/observations.json",
+   "https://192.168.1.10/observations.json",
+   "https://[::1]/observations.json",
+   "https://localhost./observations.json",
+   "https://internal.local/observations.json",
+   "https://db.internal/observations.json"
+ ]) {
+   get("pregame-source-url").value=blocked;
+   await get("fetch-pregame-source").click();
+   assert.equal(calls,1,"No private-source request may be sent");
+   assert.match(get("pregame-source-status").textContent,/URL rechazada/);
+ }
+
  console.log("Authorized HTTPS on-demand fetch UI smoke PASS (synthetic fixture; NOT Safari/network E2E)");
 })().catch(e=>{console.error(e);process.exitCode=1;});
