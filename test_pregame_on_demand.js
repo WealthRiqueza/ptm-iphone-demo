@@ -40,7 +40,7 @@ assert.throws(()=>analyze(x),/duplicado/);
 // Distinct IDs must not double-count the same source match URL.
 x=fixture();x.matches.push({...x.matches[0],id:"different-id"});
 assert.throws(()=>analyze(x),/URL de partido duplicada/);
-x=fixture();x.matches.push({...x.matches[0],id:"future",played_at_utc:"2026-11-07T19:00:00Z"});
+x=fixture();x.matches.push({...x.matches[0],id:"future",source_url:"https://example.org/future",played_at_utc:"2026-11-07T19:00:00Z"});
 assert.throws(()=>analyze(x),/evidencia futura/);
 x=fixture();x.matches[0].sets[0]=[11,10];
 assert.throws(()=>analyze(x),/Puntos de set/);
