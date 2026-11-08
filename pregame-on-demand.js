@@ -73,11 +73,10 @@
        sets.push([s[0],s[1]]);
      }
      if (Math.max(...wins)!==3 || Math.min(...wins)!==sets.length-3) throw Error("Marcador de partido inconsistente");
-     // An event can be repeated under different IDs/URLs or reversed sides.
-     // Canonical UTC instant, names and set points prevent double counting.
+     // Different IDs/URLs or home/away order may refer to the same event.
+     // Reject even conflicting scores for the same pair and exact UTC instant.
      const names=[norm(x),norm(y)].sort();
-     const canonicalSets=norm(x)===names[0]?sets:sets.map(score=>score.slice().reverse());
-     const fingerprint=JSON.stringify([names,played,canonicalSets]);
+     const fingerprint=JSON.stringify([names,played]);
      if(matchFingerprints.has(fingerprint)) throw Error("Partido duplicado con distinta fuente");
      matchFingerprints.add(fingerprint);
      if (played>=scheduled) continue;
