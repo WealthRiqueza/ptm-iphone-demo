@@ -11,7 +11,14 @@
    if (!Number.isFinite(t)) throw Error("Fecha inválida");
    return t;
  };
- const https = x => typeof x === "string" && /^https:\/\/[^/\s]+/i.test(x);
+ const https = x => {
+   if (typeof x !== "string" || /\\s/.test(x)) return false;
+   try {
+     const u = new URL(x);
+     return u.protocol === "https:" && !!u.hostname &&
+       !u.username && !u.password && !u.hash;
+   } catch (_) { return false; }
+ };
  const rate = (w,n) => n ? w+"/"+n+" ("+Math.round(100*w/n)+"%)" : "SIN VERIFICAR";
  const pairs = (a,b,ra,rb) => a+": "+ra+" | "+b+": "+rb;
  const miamiDate = ms => {const p=new Intl.DateTimeFormat("en-US",{timeZone:"America/New_York",year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(new Date(ms));const get=k=>p.find(v=>v.type===k).value;return get("year")+"-"+get("month")+"-"+get("day");};
