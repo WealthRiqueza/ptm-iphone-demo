@@ -59,3 +59,17 @@ node test_pregame_browser_e2e.cjs
 **Limitación:** WebKit en Linux no equivale a Safari físico en iPhone. La respuesta HTTPS de esta prueba está interceptada y es sintética; tampoco demuestra un proveedor Setka real ni probabilidad independiente validada. El workflow solo cuenta como aprobado cuando GitHub Actions confirme `success`.
 
 El importador también rechaza partidos con sets adicionales después de que alguien ganó tres sets, y exige captura **estrictamente anterior** al inicio. Un error al importar el JSON generado ya no debe mostrar un falso mensaje de cálculo exitoso.
+
+## Notas de mercado separadas desde ChatGPT (7 nov, 19:25 Miami)
+
+El botón **COPIAR SOLICITUD PREGAME + JSON PARA IPHONE** ahora pide dos campos opcionales adicionales en `ptm-pregame-v1`:
+
+```json
+"market_observations": {
+  "polymarket": "SIN VERIFICAR",
+  "kalshi": "SIN VERIFICAR"
+}
+```
+
+Si ChatGPT encontró un precio público, cada cadena puede describir **mercado, lado/resultado, precio, hora de captura y URL**. El importador presenta la nota en la fila correspondiente con la marca **NO AUTENTICADO**. Nunca convierte esa descripción en precio ejecutable, probabilidad PTM ni edge. Si faltan datos, conserva `SIN VERIFICAR`. Cada nota se limita a 1.000 caracteres y los tipos incorrectos hacen fallar toda la importación, limpiando datos anteriores. Los informes JSON antiguos sin este campo siguen siendo válidos. Las pruebas E2E de Chromium/WebKit cubren el caso descriptivo y el rechazo de tipos incorrectos.
+
