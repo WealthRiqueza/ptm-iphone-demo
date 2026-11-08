@@ -4,7 +4,8 @@
 (function(root) {
  "use strict";
  const clean = x => String(x || "").trim().replace(/\s+/g, " ");
- const norm = x => clean(x).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+ // Preserve accents for strict player identity: transliteration is not proof of a match.
+ const norm = x => clean(x).toLowerCase();
  const iso = x => {
    if (typeof x !== "string" || !/(Z|[+-]\d\d:\d\d)$/.test(x)) throw Error("Fecha con zona UTC requerida");
    const t = Date.parse(x);
@@ -24,6 +25,8 @@
  const miamiDate = ms => {const p=new Intl.DateTimeFormat("en-US",{timeZone:"America/New_York",year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(new Date(ms));const get=k=>p.find(v=>v.type===k).value;return get("year")+"-"+get("month")+"-"+get("day");};
  function analyze(p) {
    if (!p || typeof p !== "object" || Array.isArray(p)) throw Error("Objeto JSON requerido");
+   if (typeof p.player_a !== "string" || typeof p.player_b !== "string")
+     throw Error("Identidad de jugador debe ser texto");
    const a = clean(p.player_a), b = clean(p.player_b);
    if (!a || !b || norm(a)===norm(b) || a.length>120 || b.length>120) throw Error("Dos jugadores distintos requeridos");
    const scheduled = iso(p.scheduled_at_utc), prov=p.provenance;
@@ -35,7 +38,9 @@
    if (!Array.isArray(p.matches) || p.matches.length>200) throw Error("Máximo 200 partidos observados");
    const ids=new Set(), rows=[];
    for (const m of p.matches) {
-     if (!m || typeof m!=="object" || !clean(m.id) || ids.has(clean(m.id)) ||
+     if (!m || typeof m!=="object" || typeof m.id!=="string" || !clean(m.id) ||
+         typeof m.player_a!=="string" || typeof m.player_b!=="string" ||
+         ids.has(clean(m.id)) ||
          !https(m.source_url)) throw Error("ID duplicado o URL de partido inválida");
      ids.add(clean(m.id));
      const x=clean(m.player_a), y=clean(m.player_b);
