@@ -39,6 +39,9 @@ const duplicated=input([
    player_a:"B",player_b:"A"}
 ]);
 assert.throws(() => globalThis.PTMOnDemand.analyze(duplicated), /Partido duplicado/);
+// A conflicting 3-0 score at the same time must also fail closed.
+duplicated.matches[1].sets=[[11,8],[11,7],[11,9]];
+assert.throws(() => globalThis.PTMOnDemand.analyze(duplicated), /Partido duplicado/);
 duplicated.matches[1].played_at_utc="2026-11-06T12:30:00-05:00";
 assert.equal(globalThis.PTMOnDemand.analyze(duplicated).observed_rows, 2);
 assert.equal(globalThis.PTMOnDemand.analyze(input([])).observed_rows, 0);
