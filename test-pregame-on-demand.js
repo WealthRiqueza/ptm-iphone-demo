@@ -31,6 +31,16 @@ for (const invalid of [[13,8],[11,10],[12,9],[20,10]]) {
 assert.throws(() => globalThis.PTMOnDemand.analyze(input([
   row("future", [[11,8],[11,8],[11,8]], "2026-11-07T17:30:00Z")
 ])), /evidencia futura/);
+// Cross-source duplicate: distinct IDs and URLs, swapped home/away, same UTC
+// instant and same actual points. Reject rather than inflate form or H2H.
+const duplicated=input([
+  row("provider-one", [[11,8],[11,7],[11,9]]),
+  {...row("provider-two", [[8,11],[7,11],[9,11]], "2026-11-06T12:00:00-05:00"),
+   player_a:"B",player_b:"A"}
+]);
+assert.throws(() => globalThis.PTMOnDemand.analyze(duplicated), /Partido duplicado/);
+duplicated.matches[1].played_at_utc="2026-11-06T12:30:00-05:00";
+assert.equal(globalThis.PTMOnDemand.analyze(duplicated).observed_rows, 2);
 assert.equal(globalThis.PTMOnDemand.analyze(input([])).observed_rows, 0);
 for (const url of [
   "https://", "https://user:secret@example.org/m",
