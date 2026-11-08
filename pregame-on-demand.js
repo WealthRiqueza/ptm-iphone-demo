@@ -12,7 +12,7 @@
    return t;
  };
  const https = x => {
-   if (typeof x !== "string" || /\\s/.test(x)) return false;
+   if (typeof x !== "string" || /\s/.test(x)) return false;
    try {
      const u = new URL(x);
      return u.protocol === "https:" && !!u.hostname &&
